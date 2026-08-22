@@ -1,272 +1,572 @@
-## Overview
+# CivicLens 🔎
 
-This project uses the following tech stack:
-- Vite
-- Typescript
-- React Router v7 (all imports from `react-router` instead of `react-router-dom`)
-- React 19 (for frontend components)
-- Tailwind v4 (for styling)
-- Shadcn UI (for UI components library)
-- Lucide Icons (for icons)
-- Convex (for backend & database)
-- Convex Auth (for authentication)
-- Framer Motion (for animations)
-- Three js (for 3d models)
+### Simplifying access to information through technology.
 
-All relevant files live in the 'src' directory.
+CivicLens is a modern web platform designed to make **Right to Information (RTI) applications easier, clearer, and more accessible**.
 
-Use bun for the package manager.
+Instead of navigating complicated procedures and paperwork, users can create, manage, and track their RTI applications through a simple digital interface.
 
-## Setup
+The goal is straightforward:
 
-This project is set up already and running on a cloud environment, as well as a convex development in the sandbox.
+> **Make information accessible. Make the process simpler. Give citizens a clearer path to accountability.**
 
-## Environment Variables
+---
 
-The project is set up with project specific CONVEX_DEPLOYMENT and VITE_CONVEX_URL environment variables on the client side.
+## ✨ What is CivicLens?
 
-The convex server has a separate set of environment variables that are accessible by the convex backend.
+The Right to Information Act gives citizens the ability to request information from public authorities. However, understanding what to ask, how to structure an application, and keeping track of submitted requests can still be confusing.
 
-Currently, these variables include auth-specific keys: JWKS, JWT_PRIVATE_KEY, and SITE_URL.
+**CivicLens acts as a digital companion for the RTI process.**
 
+It provides a centralized experience where users can:
 
-# Using Authentication (Important!)
+* Create structured RTI applications
+* Organize and manage their RTI requests
+* Track application progress
+* Access their previous applications
+* Manage their profile
+* Authenticate securely
+* Export application information for further use
 
-You must follow these conventions when using authentication.
+The platform is designed with a clean, responsive interface so that the RTI process feels less like paperwork and more like a guided digital workflow.
 
-## Auth is already set up.
+---
 
-All convex authentication functions are already set up. The auth currently uses email OTP and anonymous users, but can support more.
+## 🎯 Problem Statement
 
-The email OTP configuration is defined in `src/convex/auth/emailOtp.ts`. DO NOT MODIFY THIS FILE.
+Many citizens are unaware of how to effectively use the RTI process.
 
-Also, DO NOT MODIFY THESE AUTH FILES: `src/convex/auth.config.ts` and `src/convex/auth.ts`.
+Common difficulties include:
 
-## Using Convex Auth on the backend
+* Understanding how to frame an RTI request
+* Knowing what information can be requested
+* Structuring an application correctly
+* Keeping track of multiple applications
+* Maintaining records of submitted requests
+* Navigating a process that can feel bureaucratic and intimidating
 
-On the `src/convex/users.ts` file, you can use the `getCurrentUser` function to get the current user's data.
+CivicLens aims to reduce this friction by bringing the workflow into one accessible platform.
 
-## Using Convex Auth on the frontend
+---
 
-The `/auth` page is already set up to use auth. Navigate to `/auth` for all log in / sign up sequences.
+## 💡 Our Approach
 
-You MUST use this hook to get user data. Never do this yourself without the hook:
-```typescript
-import { useAuth } from "@/hooks/use-auth";
+CivicLens focuses on three core principles:
 
-const { isLoading, isAuthenticated, user, signIn, signOut } = useAuth();
+### 1. Simplicity
+
+A clean interface guides users through the application process without unnecessary complexity.
+
+### 2. Organization
+
+Applications are stored in one place so users can easily revisit and manage their RTI requests.
+
+### 3. Accessibility
+
+The platform turns a traditionally document-heavy process into a structured digital experience that can be accessed from modern devices.
+
+---
+
+## 🚀 Key Features
+
+### 📝 RTI Application Creation
+
+Create structured RTI applications through a dedicated application workflow.
+
+Users can enter the necessary details and prepare their request without having to manually format everything from scratch.
+
+### 📂 My RTIs
+
+A dedicated space for managing previously created RTI applications.
+
+Users can view and organize their requests instead of keeping scattered documents or notes.
+
+### 📊 Dashboard
+
+The dashboard provides a centralized overview of the user's RTI activity and serves as the main workspace after authentication.
+
+### 👤 User Profile
+
+Users can manage their account information through a dedicated profile section.
+
+### 🔐 Authentication
+
+CivicLens uses **Convex Auth** for authentication, including email-based OTP authentication and support for authenticated application workflows.
+
+Protected routes ensure that user-specific functionality is accessible only to authenticated users.
+
+### 📄 Document Export
+
+The application includes support for generating downloadable documents, making it easier to take a completed RTI request beyond the platform.
+
+### 📱 Responsive Interface
+
+The UI is designed to work across different screen sizes, making CivicLens usable on desktops, tablets, and mobile devices.
+
+### 🎨 Modern UI
+
+The application uses reusable UI components, smooth animations, responsive layouts, and a consistent visual system to keep the experience intuitive and engaging.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer               | Technology      |
+| ------------------- | --------------- |
+| Frontend            | React 19        |
+| Language            | TypeScript      |
+| Build Tool          | Vite            |
+| Routing             | React Router v7 |
+| Styling             | Tailwind CSS v4 |
+| UI Components       | shadcn/ui       |
+| Icons               | Lucide React    |
+| Backend             | Convex          |
+| Database            | Convex          |
+| Authentication      | Convex Auth     |
+| Animations          | Framer Motion   |
+| Data Visualization  | Recharts        |
+| Validation          | Zod             |
+| Forms               | React Hook Form |
+| Document Generation | jsPDF, docx     |
+| Package Manager     | Bun / npm       |
+
+The repository currently uses React 19, Vite, TypeScript, React Router, Tailwind CSS, shadcn/ui, Convex, Convex Auth, Framer Motion, and Three.js among its core dependencies.
+
+---
+
+## 🏗️ Architecture
+
+CivicLens follows a modern frontend + serverless architecture.
+
+```text
+                         ┌─────────────────────┐
+                         │      CivicLens      │
+                         │      Web Client     │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │   React + Vite      │
+                         │   TypeScript        │
+                         └──────────┬──────────┘
+                                    │
+                   ┌────────────────┴────────────────┐
+                   │                                 │
+                   ▼                                 ▼
+          ┌─────────────────┐              ┌─────────────────┐
+          │  Convex Auth    │              │  Convex Backend │
+          │ Authentication  │              │   + Database    │
+          └─────────────────┘              └────────┬────────┘
+                                                     │
+                                                     ▼
+                                            ┌─────────────────┐
+                                            │  RTI Application │
+                                            │      Data        │
+                                            └─────────────────┘
 ```
 
-## Protected Routes
+The backend logic and data layer are organized under `src/convex`, including authentication, user management, RTI application operations, HTTP handling, and the database schema.
 
-The starter `/dashboard` route is protected with `RequireAuth`, which sends
-signed-out users to `/auth?returnTo=<current route>`. Extend that page for the
-product's authenticated experience, and reuse `RequireAuth` when adding another
-protected route.
+---
 
-## Auth Page
+## 📁 Project Structure
 
-The auth page is defined in `src/pages/Auth.tsx`. Send sign-in and sign-up actions
-to `/auth`.
-
-## Authorization
-
-You can perform authorization checks on the frontend and backend.
-
-On the frontend, you can use the `useAuth` hook to get the current user's data and authentication state.
-
-You should also be protecting queries, mutations, and actions at the base level, checking for authorization securely.
-
-## Adding a redirect after auth
-
-The `/auth` route in `src/main.tsx` redirects to `/dashboard` by default. If the
-product's main authenticated route is different, update `redirectAfterAuth` to
-that route. A validated same-origin `returnTo` query parameter takes priority so
-users can resume the protected page they originally requested. Never leave an
-authenticated product redirecting back to the public landing page.
-
-## Complete authenticated products
-
-When the requested product implies accounts, a workspace, a dashboard, or other
-signed-in functionality, the task is not complete with only a landing page and
-auth form. Build the main authenticated experience, protect its route, and verify
-that signing in reaches it.
-
-# Frontend Conventions
-
-You will be using the Vite frontend with React 19, Tailwind v4, and Shadcn UI.
-
-Generally, pages should be in the `src/pages` folder, and components should be in the `src/components` folder.
-
-Shadcn primitives are located in the `src/components/ui` folder and should be used by default.
-
-## Page routing
-
-Your page component should go under the `src/pages` folder.
-
-When adding a page, update the react router configuration in `src/main.tsx` to include the new route you just added.
-
-## Shad CN conventions
-
-Follow these conventions when using Shad CN components, which you should use by default.
-- Remember to use "cursor-pointer" to make the element clickable
-- For title text, use the "tracking-tight font-bold" class to make the text more readable
-- Always make apps MOBILE RESPONSIVE. This is important
-- AVOID NESTED CARDS. Try and not to nest cards, borders, components, etc. Nested cards add clutter and make the app look messy.
-- AVOID SHADOWS. Avoid adding any shadows to components. stick with a thin border without the shadow.
-- Avoid skeletons; instead, use the loader2 component to show a spinning loading state when loading data.
-
-
-## Landing Pages
-
-You must always create good-looking designer-level styles to your application. 
-- Make it well animated and fit a certain "theme", ie neo brutalist, retro, neumorphism, glass morphism, etc
-
-Use known images and emojis from online.
-
-If the user is logged in already, show the get started button to say "Dashboard" or "Profile" instead to take them there.
-
-## Responsiveness and formatting
-
-Make sure pages are wrapped in a container to prevent the width stretching out on wide screens. Always make sure they are centered aligned and not off-center.
-
-Always make sure that your designs are mobile responsive. Verify the formatting to ensure it has correct max and min widths as well as mobile responsiveness.
-
-- Always create sidebars for protected dashboard pages and navigate between pages
-- Always create navbars for landing pages
-- On these bars, the created logo should be clickable and redirect to the index page
-
-## Animating with Framer Motion
-
-You must add animations to components using Framer Motion. It is already installed and configured in the project.
-
-To use it, import the `motion` component from `framer-motion` and use it to wrap the component you want to animate.
-
-
-### Other Items to animate
-- Fade in and Fade Out
-- Slide in and Slide Out animations
-- Rendering animations
-- Button clicks and UI elements
-
-Animate for all components, including on landing page and app pages.
-
-## Three JS Graphics
-
-Your app comes with three js by default. You can use it to create 3D graphics for landing pages, games, etc.
-
-
-## Colors
-
-You can override colors in: `src/index.css`
-
-This uses the oklch color format for tailwind v4.
-
-Always use these color variable names.
-
-Make sure all ui components are set up to be mobile responsive and compatible with both light and dark mode.
-
-Set theme using `dark` or `light` variables at the parent className.
-
-## Styling and Theming
-
-When changing the theme, always change the underlying theme of the shad cn components app-wide under `src/components/ui` and the colors in the index.css file.
-
-Avoid hardcoding in colors unless necessary for a use case, and properly implement themes through the underlying shad cn ui components.
-
-When styling, ensure buttons and clickable items have pointer-click on them (don't by default).
-
-Always follow a set theme style and ensure it is tuned to the user's liking.
-
-## Toasts
-
-You should always use toasts to display results to the user, such as confirmations, results, errors, etc.
-
-Use the shad cn Sonner component as the toaster. For example:
-
-```
-import { toast } from "sonner"
-
-import { Button } from "@/components/ui/button"
-export function SonnerDemo() {
-  return (
-    <Button
-      variant="outline"
-      onClick={() =>
-        toast("Event has been created", {
-          description: "Sunday, December 03, 2023 at 9:00 AM",
-          action: {
-            label: "Undo",
-            onClick: () => console.log("Undo"),
-          },
-        })
-      }
-    >
-      Show Toast
-    </Button>
-  )
-}
+```text
+CivicLens/
+│
+├── public/                 # Static assets
+│
+├── src/
+│   ├── assets/             # Application assets
+│   │
+│   ├── components/         # Reusable UI components
+│   │
+│   ├── convex/             # Backend, database & authentication
+│   │   ├── auth/           # Authentication configuration
+│   │   ├── rtiApplications.ts
+│   │   ├── schema.ts
+│   │   ├── users.ts
+│   │   └── http.ts
+│   │
+│   ├── hooks/              # Custom React hooks
+│   │
+│   ├── lib/                # Utility functions
+│   │
+│   ├── pages/              # Application pages
+│   │   ├── About.tsx
+│   │   ├── Auth.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── Landing.tsx
+│   │   ├── MyRTIs.tsx
+│   │   ├── NewRTI.tsx
+│   │   ├── Profile.tsx
+│   │   └── NotFound.tsx
+│   │
+│   ├── types/              # TypeScript types
+│   ├── index.css           # Global styling
+│   ├── main.tsx            # Application entry point
+│   └── instrumentation.tsx
+│
+├── .env.example            # Environment variable template
+├── convex.json             # Convex configuration
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── README.md
 ```
 
-Remember to import { toast } from "sonner". Usage: `toast("Event has been created.")`
+The current repository structure separates pages, reusable components, hooks, utilities, types, and Convex backend functionality into dedicated directories.
 
-## Dialogs
+---
 
-Always ensure your larger dialogs have a scroll in its content to ensure that its content fits the screen size. Make sure that the content is not cut off from the screen.
+## ⚙️ Getting Started
 
-Ideally, instead of using a new page, use a Dialog instead. 
+### Prerequisites
 
-# Using the Convex backend
+Make sure you have the following installed:
 
-You will be implementing the convex backend. Follow your knowledge of convex and the documentation to implement the backend.
+* Node.js 18+
+* npm or Bun
+* A Convex account/project
 
-## The Convex Schema
+---
 
-You must correctly follow the convex schema implementation.
+### 1. Clone the repository
 
-The schema is defined in `src/convex/schema.ts`.
-
-Do not include the `_id` and `_creationTime` fields in your queries (it is included by default for each table).
-Do not index `_creationTime` as it is indexed for you. Never have duplicate indexes.
-
-
-## Convex Actions: Using CRUD operations
-
-When running anything that involves external connections, you must use a convex action with "use node" at the top of the file.
-
-You cannot have queries or mutations in the same file as a "use node" action file. Thus, you must use pre-built queries and mutations in other files.
-
-You can also use the pre-installed internal crud functions for the database:
-
-```ts
-// in convex/users.ts
-import { crud } from "convex-helpers/server/crud";
-import schema from "./schema.ts";
-
-export const { create, read, update, destroy } = crud(schema, "users");
-
-// in some file, in an action:
-const user = await ctx.runQuery(internal.users.read, { id: userId });
-
-await ctx.runMutation(internal.users.update, {
-  id: userId,
-  patch: {
-    status: "inactive",
-  },
-});
+```bash
+git clone https://github.com/thanishkaykb/CivicLens.git
+cd CivicLens
 ```
 
+---
 
-## Common Convex Mistakes To Avoid
+### 2. Install dependencies
 
-When using convex, make sure:
-- Document IDs are referenced as `_id` field, not `id`.
-- Document ID types are referenced as `Id<"TableName">`, not `string`.
-- Document object types are referenced as `Doc<"TableName">`.
-- Keep schemaValidation to false in the schema file.
-- You must correctly type your code so that it passes the type checker.
-- You must handle null / undefined cases of your convex queries for both frontend and backend, or else it will throw an error that your data could be null or undefined.
-- Always use the `@/folder` path, with `@/convex/folder/file.ts` syntax for importing convex files.
-- This includes importing generated files like `@/convex/_generated/server`, `@/convex/_generated/api`
-- Remember to import functions like useQuery, useMutation, useAction, etc. from `convex/react`
-- NEVER have return type validators.
+Using npm:
+
+```bash
+npm install
+```
+
+Or using Bun:
+
+```bash
+bun install
+```
+
+---
+
+### 3. Configure environment variables
+
+Create your local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Configure the required Convex environment variables according to your Convex deployment.
+
+Typical client-side configuration includes:
+
+```env
+CONVEX_DEPLOYMENT=your_convex_deployment
+VITE_CONVEX_URL=your_convex_url
+```
+
+Authentication-related environment variables are configured on the Convex backend.
+
+**Never commit private keys, authentication secrets, or production credentials to GitHub.**
+
+The repository already includes an `.env.example` file for environment configuration.
+
+---
+
+### 4. Start the development server
+
+```bash
+npm run dev
+```
+
+Or:
+
+```bash
+bun run dev
+```
+
+Vite will start the local development server.
+
+---
+
+## 🔐 Authentication
+
+CivicLens uses **Convex Auth** for authentication.
+
+The authentication flow includes:
+
+```text
+User
+  │
+  ▼
+Authentication Page
+  │
+  ▼
+Email OTP Verification
+  │
+  ▼
+Authenticated Session
+  │
+  ▼
+Protected Dashboard
+  │
+  ├── My RTIs
+  ├── New RTI
+  ├── Profile
+  └── Application Management
+```
+
+Authenticated routes are protected using the application's authentication flow, while user information is accessed through the project's authentication hooks.
+
+---
+
+## 🧭 Application Flow
+
+A typical CivicLens user journey looks like this:
+
+```text
+Landing Page
+     │
+     ▼
+Sign In / Sign Up
+     │
+     ▼
+Dashboard
+     │
+     ├───────────────┐
+     │               │
+     ▼               ▼
+New RTI           My RTIs
+     │               │
+     ▼               ▼
+Create Request   View Requests
+     │               │
+     └───────┬───────┘
+             ▼
+       Manage RTI Data
+             │
+             ▼
+       Export / Use Request
+```
+
+---
+
+## 🧩 Core Modules
+
+### Landing
+
+Introduces CivicLens and communicates the purpose of the platform.
+
+### Authentication
+
+Handles user sign-in and registration using Convex Auth.
+
+### Dashboard
+
+Provides the authenticated user's central workspace.
+
+### New RTI
+
+Allows users to create a new RTI application.
+
+### My RTIs
+
+Provides access to previously created RTI applications.
+
+### Profile
+
+Provides account and user information management.
+
+### About
+
+Explains the purpose and concept behind CivicLens.
+
+These modules correspond to the current page structure in `src/pages`.
+
+---
+
+## 🎨 Design & UX
+
+CivicLens follows a modern application design approach focused on:
+
+* Responsive layouts
+* Clear visual hierarchy
+* Reusable UI components
+* Accessible interactions
+* Smooth page transitions
+* Consistent typography and spacing
+* Light and dark theme compatibility
+* Minimal visual clutter
+
+Framer Motion is used for interface animations, while shadcn/ui and Tailwind CSS provide the component and styling foundation.
+
+---
+
+## 🛡️ Security Considerations
+
+CivicLens uses authenticated access for user-specific functionality.
+
+Important security practices include:
+
+* Keep environment variables private
+* Never expose authentication secrets in frontend code
+* Validate user input
+* Protect backend operations with authorization checks
+* Use environment-specific configuration
+* Do not commit `.env` files containing secrets
+
+For production deployments, always use secure credentials and properly configured authentication settings.
+
+---
+
+## 📈 Future Scope
+
+CivicLens can be extended into a more complete civic-tech platform with features such as:
+
+* 🤖 AI-assisted RTI drafting
+* Intelligent question suggestions
+* RTI application quality checking
+* Government department discovery
+* Location-based Public Information Officer lookup
+* Application status reminders
+* Email and notification alerts
+* RTI response document management
+* Appeal workflow support
+* Analytics and civic transparency dashboards
+* Multilingual support for Indian languages
+* Accessibility-focused modes
+* Mobile application support
+
+The long-term vision is to move from simply **creating RTIs** to building a complete digital ecosystem for citizen information access.
+
+---
+
+## 🌍 Why CivicLens?
+
+Technology should not only make things faster.
+
+It should make complicated systems easier to understand.
+
+CivicLens explores how modern web technologies can reduce friction between citizens and public institutions by transforming a document-heavy process into a clearer, more approachable digital workflow.
+
+```text
+                    INFORMATION
+                         │
+                         ▼
+                    CIVICLENS
+                         │
+             ┌───────────┴───────────┐
+             ▼                       ▼
+         Simpler                  Organized
+         Process                   Requests
+             │                       │
+             └───────────┬───────────┘
+                         ▼
+                  INFORMED CITIZENS
+```
+
+---
+
+## 🧪 Development Commands
+
+### Start development server
+
+```bash
+npm run dev
+```
+
+### Build for production
+
+```bash
+npm run build
+```
+
+### Preview production build
+
+```bash
+npm run preview
+```
+
+### Run linting
+
+```bash
+npm run lint
+```
+
+### Format code
+
+```bash
+npm run format
+```
+
+These scripts are defined in the project's `package.json`.
+
+---
+
+## 🤝 Contributing
+
+Contributions, ideas, and improvements are welcome.
+
+To contribute:
+
+```bash
+# Fork the repository
+
+# Clone your fork
+git clone https://github.com/<your-username>/CivicLens.git
+
+# Create a branch
+git checkout -b feature/your-feature
+
+# Make your changes
+
+# Commit
+git commit -m "Add your feature"
+
+# Push
+git push origin feature/your-feature
+```
+
+Then open a Pull Request.
+
+---
+
+## 📜 License
+
+This project is available under the license specified in the repository.
+
+---
+
+## 👩‍💻 Author
+
+**Thanishka Yogesh**
+
+Computer Science Engineering Student
+Sri Sairam Engineering College
+
+Built with curiosity, code, and a simple question:
+
+> **What if accessing information could be easier?**
+
+---
+
+## ⭐ Support
+
+If you find CivicLens interesting, consider giving the repository a ⭐ on GitHub.
+
+Your feedback, ideas, and contributions can help shape the next version of the project.
+
+---
+
+<p align="center">
+  <b>CivicLens</b><br>
+  Making civic information easier to access, understand, and act on.
+</p>
