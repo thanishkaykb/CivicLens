@@ -343,14 +343,44 @@ export default function NewRTI() {
   const toggleEditMode = (key: string) => {
     setEditMode((prev) => ({ ...prev, [key]: !prev[key] }));
     if (!editMode[key] && editingDraft) {
-      const val = editingDraft[key as keyof RTIDraft];
-      setEditValues((prev) => ({ ...prev, [key]: typeof val === "string" ? val : "" }));
+      if (key === "applicant") {
+        setEditValues((prev) => ({
+          ...prev,
+          applicantName: editingDraft.applicantName || "",
+          applicantAddress: editingDraft.applicantAddress || "",
+          applicantEmail: editingDraft.applicantEmail || "",
+          applicantPhone: editingDraft.applicantPhone || "",
+        }));
+      } else if (key === "authority" && authority) {
+        setEditValues((prev) => ({
+          ...prev,
+          authPublicAuthority: authority.publicAuthority || "",
+          authDepartment: authority.department || "",
+          authAddressedTo: authority.addressedTo || "",
+          authOfficialAddress: authority.officialAddress || "",
+          authSubmissionMethod: authority.submissionMethod || "",
+          authOfficialWebsite: authority.officialWebsite || "",
+        }));
+      } else {
+        const val = editingDraft[key as keyof RTIDraft];
+        setEditValues((prev) => ({ ...prev, [key]: typeof val === "string" ? val : "" }));
+      }
     }
   };
 
   const saveEdit = (key: string) => {
     if (editingDraft) {
-      setEditingDraft({ ...editingDraft, [key]: editValues[key] });
+      if (key === "applicant") {
+        setEditingDraft({
+          ...editingDraft,
+          applicantName: editValues.applicantName || editingDraft.applicantName,
+          applicantAddress: editValues.applicantAddress || editingDraft.applicantAddress,
+          applicantEmail: editValues.applicantEmail || editingDraft.applicantEmail,
+          applicantPhone: editValues.applicantPhone || editingDraft.applicantPhone,
+        });
+      } else {
+        setEditingDraft({ ...editingDraft, [key]: editValues[key] });
+      }
     }
     setEditMode((prev) => ({ ...prev, [key]: false }));
   };
@@ -393,18 +423,79 @@ export default function NewRTI() {
   };
 
   const progress = ((stepIndex(step) + 1) / STEPS.length) * 100;
+  const currentIdx = stepIndex(step);
+
+  // Determine which steps have data and are navigable
+  const isStepAccessible = (key: FlowStep): boolean => {
+    const idx = stepIndex(key);
+    // Always accessible if it's the current step
+    if (key === step) return true;
+    // Input is always accessible
+    if (key === "input") return true;
+    // Confirm analysis needs analysis
+    if (key === "confirm_analysis") return !!analysis;
+    // Questions need analysis
+    if (key === "questions") return !!analysis;
+    // Evidence needs analysis
+    if (key === "evidence") return !!analysis;
+    // Authority needs analysis
+    if (key === "authority") return !!analysis;
+    // Review needs draft
+    if (key === "review") return !!editingDraft;
+    // Export needs draft
+    if (key === "export") return !!editingDraft;
+    return true;
+  };
+
+  const goToStep = (key: FlowStep) => {
+    if (isStepAccessible(key)) {
+      setReturnTo(null);
+      setStep(key);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const prevStep = () => {
+    if (currentIdx > 0) goToStep(STEPS[currentIdx - 1].key);
+  };
+  const nextStep = () => {
+    if (currentIdx < STEPS.length - 1 && isStepAccessible(STEPS[currentIdx + 1].key)) {
+      goToStep(STEPS[currentIdx + 1].key);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-        {/* Progress */}
+        {/* Progress with navigation */}
         <div className="mb-6">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Step {stepIndex(step) + 1} of {STEPS.length}</span>
-            <span className="text-xs font-medium text-muted-foreground">{STEPS[stepIndex(step)].label}</span>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={prevStep} disabled={currentIdx === 0} className="h-7 px-2">
+                <ArrowLeft className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-xs font-medium text-muted-foreground">Step {currentIdx + 1} of {STEPS.length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">{STEPS[currentIdx].label}</span>
+              <Button variant="ghost" size="sm" onClick={nextStep} disabled={currentIdx === STEPS.length - 1 || !isStepAccessible(STEPS[currentIdx + 1]?.key)} className="h-7 px-2">
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
-          <Progress value={progress} className="h-1.5" />
+          {/* Clickable step dots */}
+          <div className="flex items-center gap-1 mb-1">
+            {STEPS.map((s, i) => (
+              <button key={s.key} type="button"
+                onClick={() => goToStep(s.key)}
+                disabled={!isStepAccessible(s.key)}
+                className={`h-1.5 flex-1 rounded-full transition-all ${
+                  i === currentIdx ? "bg-primary" : isStepAccessible(s.key) ? "bg-primary/30 hover:bg-primary/50" : "bg-muted"
+                }`} title={s.label}
+              />
+            ))}
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
@@ -874,16 +965,29 @@ export default function NewRTI() {
                 {editMode.authority ? (
                   <div className="space-y-3">
                     {([
-                      ["publicAuthority", "Public Authority"],
-                      ["department", "Department"],
-                      ["addressedTo", "Addressed To"],
-                      ["officialAddress", "Official Address"],
-                      ["submissionMethod", "Submission Method"],
-                      ["officialWebsite", "Official Website"],
-                    ] as const).map(([key, label]) => (
-                      <div key={key}><Label className="text-xs font-semibold">{label}</Label><Input value={(authority as any)?.[key] || ""} onChange={(e) => setAuthority((prev) => prev ? { ...prev, [key]: e.target.value } : prev)} className="mt-1" /></div>
+                      ["authPublicAuthority", "Public Authority"],
+                      ["authDepartment", "Department"],
+                      ["authAddressedTo", "Addressed To"],
+                      ["authOfficialAddress", "Official Address"],
+                      ["authSubmissionMethod", "Submission Method"],
+                      ["authOfficialWebsite", "Official Website"],
+                    ] as const).map(([field, label]) => (
+                      <div key={field}><Label className="text-xs font-semibold">{label}</Label><Input value={editValues[field] || ""} onChange={(e) => setEditValues((p) => ({ ...p, [field]: e.target.value }))} className="mt-1" /></div>
                     ))}
-                    <Button size="sm" onClick={() => setEditMode((p) => ({ ...p, authority: false }))}>Save</Button>
+                    <Button size="sm" onClick={() => {
+                      if (authority) {
+                        setAuthority({
+                          ...authority,
+                          publicAuthority: editValues.authPublicAuthority || authority.publicAuthority,
+                          department: editValues.authDepartment || authority.department,
+                          addressedTo: editValues.authAddressedTo || authority.addressedTo,
+                          officialAddress: editValues.authOfficialAddress || authority.officialAddress,
+                          submissionMethod: editValues.authSubmissionMethod || authority.submissionMethod,
+                          officialWebsite: editValues.authOfficialWebsite || authority.officialWebsite,
+                        });
+                      }
+                      setEditMode((p) => ({ ...p, authority: false }));
+                    }}>Save</Button>
                   </div>
                 ) : authority ? (
                   <div className="grid gap-2 text-sm sm:grid-cols-2">
