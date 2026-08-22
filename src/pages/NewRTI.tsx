@@ -99,12 +99,17 @@ export default function NewRTI() {
     }
   }, [existingDraft]);
 
-  const handleSaveDraft = useCallback(async () => {
-    setIsSavingDraft(true);
+  // Ref to track last saved snapshot to avoid redundant saves
+  const lastSavedRef = useRef<string>("");
+
+  // Silent auto-save helper (no toast, no loading state)
+  const autoSave = useCallback(async () => {
+    const snapshot = JSON.stringify({ description, analysis, answers, authority, editingDraft, draft });
+    if (snapshot === lastSavedRef.current) return; // Nothing changed
     try {
       const id = await saveDraftMutation({
         applicationId: applicationId || undefined,
-        title: draft?.title || analysis?.statedProblem?.substring(0, 80) || "RTI Application",
+        title: editingDraft?.title || draft?.title || analysis?.statedProblem?.substring(0, 80) || description.substring(0, 80) || "RTI Application",
         originalDescription: description,
         problemAnalysis: analysis || undefined,
         answers: answers.length > 0 ? answers : undefined,
@@ -113,6 +118,42 @@ export default function NewRTI() {
         status: editingDraft ? "ready_to_submit" : "draft",
       });
       setApplicationId(id);
+      lastSavedRef.current = snapshot;
+    } catch { /* silent fail */ }
+  }, [applicationId, description, analysis, answers, authority, editingDraft, draft, saveDraftMutation]);
+
+  // Auto-save when editingDraft changes (review page edits)
+  useEffect(() => {
+    if (!editingDraft || !applicationId) return;
+    const t = setTimeout(autoSave, 1500);
+    return () => clearTimeout(t);
+  }, [editingDraft, applicationId, autoSave]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const h = (e: BeforeUnloadEvent) => {
+      if (description.trim()) { e.preventDefault(); e.returnValue = ""; }
+    };
+    window.addEventListener("beforeunload", h);
+    return () => window.removeEventListener("beforeunload", h);
+  }, [description]);
+
+  // Manual save with toast feedback
+  const handleSaveDraft = useCallback(async () => {
+    setIsSavingDraft(true);
+    try {
+      const id = await saveDraftMutation({
+        applicationId: applicationId || undefined,
+        title: editingDraft?.title || draft?.title || analysis?.statedProblem?.substring(0, 80) || description.substring(0, 80) || "RTI Application",
+        originalDescription: description,
+        problemAnalysis: analysis || undefined,
+        answers: answers.length > 0 ? answers : undefined,
+        authority: authority || undefined,
+        draft: editingDraft || draft || undefined,
+        status: editingDraft ? "ready_to_submit" : "draft",
+      });
+      setApplicationId(id);
+      lastSavedRef.current = JSON.stringify({ description, analysis, answers, authority, editingDraft, draft });
       toast.success("Draft saved");
     } catch { toast.error("Could not save draft"); }
     finally { setIsSavingDraft(false); }
@@ -138,9 +179,19 @@ export default function NewRTI() {
 
   const handleStartQuestions = useCallback(async () => {
     setStep("questions");
+    // Auto-save when user confirms analysis and moves to questions
+    setTimeout(() => {
+      saveDraftMutation({
+        applicationId: applicationId || undefined,
+        title: analysis?.statedProblem?.substring(0, 80) || description.substring(0, 80) || "RTI Application",
+        originalDescription: description,
+        problemAnalysis: analysis || undefined,
+        status: "draft",
+      }).then((id) => { setApplicationId(id); lastSavedRef.current = JSON.stringify({ description, analysis, answers, authority, editingDraft, draft }); }).catch(() => {});
+    }, 0);
     const q = await generateQuestions(analysis!, answers);
     setCurrentQuestion(q);
-  }, [analysis, answers]);
+  }, [analysis, answers, applicationId, description, saveDraftMutation]);
 
   const handleAnswer = useCallback(async () => {
     if (!currentQuestion) return;
@@ -177,9 +228,21 @@ export default function NewRTI() {
     try {
       const auth = await identifyAuthority(analysis!, answers);
       setAuthority(auth);
+      // Auto-save when authority is identified
+      setTimeout(() => {
+        saveDraftMutation({
+          applicationId: applicationId || undefined,
+          title: analysis?.statedProblem?.substring(0, 80) || description.substring(0, 80) || "RTI Application",
+          originalDescription: description,
+          problemAnalysis: analysis || undefined,
+          answers: answers.length > 0 ? answers : undefined,
+          authority: auth,
+          status: "draft",
+        }).then((id) => { setApplicationId(id); }).catch(() => {});
+      }, 0);
     } catch { toast.error("Could not identify authority. Please enter details manually."); }
     finally { setIsGenerating(false); }
-  }, [analysis, answers]);
+  }, [analysis, answers, applicationId, description, saveDraftMutation]);
 
   const handleGenerateDraft = useCallback(async () => {
     if (!authority) return;
@@ -191,9 +254,22 @@ export default function NewRTI() {
       setEditingDraft({ ...rti });
       setReturnTo(null);
       setStep("review");
+      // Auto-save immediately after RTI is generated — this is the critical save point
+      setTimeout(() => {
+        saveDraftMutation({
+          applicationId: applicationId || undefined,
+          title: rti.title || analysis?.statedProblem?.substring(0, 80) || "RTI Application",
+          originalDescription: description,
+          problemAnalysis: analysis || undefined,
+          answers: answers.length > 0 ? answers : undefined,
+          authority: authority || undefined,
+          draft: rti,
+          status: "ready_to_submit",
+        }).then((id) => { setApplicationId(id); }).catch(() => {});
+      }, 0);
     } catch { toast.error("Could not generate RTI draft. Please try again."); }
     finally { setIsGenerating(false); }
-  }, [analysis, answers, authority, applicantName, applicantAddress]);
+  }, [analysis, answers, authority, applicantName, applicantAddress, applicationId, description, saveDraftMutation]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
