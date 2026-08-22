@@ -58,6 +58,7 @@ export default function NewRTI() {
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [isUnknown, setIsUnknown] = useState(false);
   const [multiSelections, setMultiSelections] = useState<string[]>([]);
+  const [otherText, setOtherText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [authority, setAuthority] = useState<AuthorityInfo | null>(null);
@@ -199,7 +200,8 @@ export default function NewRTI() {
     if (isUnknown) {
       answerText = "I don't know";
     } else if (currentQuestion.answerType === "multi_select") {
-      answerText = multiSelections.join(", ") || "";
+      const items = multiSelections.map((s) => (s === "Other" && otherText.trim()) ? `Other: ${otherText.trim()}` : s);
+      answerText = items.join(", ") || "";
     } else {
       answerText = currentAnswer;
     }
@@ -214,6 +216,7 @@ export default function NewRTI() {
     setCurrentAnswer("");
     setIsUnknown(false);
     setMultiSelections([]);
+    setOtherText("");
     const next = await generateQuestions(analysis!, updatedAnswers);
     if (next) {
       setCurrentQuestion(next);
@@ -630,6 +633,17 @@ export default function NewRTI() {
                         </button>
                       );
                     })}
+                    {currentQuestion.options.includes("Other") && multiSelections.includes("Other") && (
+                      <div className="mt-2">
+                        <Input
+                          value={otherText}
+                          onChange={(e) => setOtherText(e.target.value)}
+                          placeholder="Please specify..."
+                          className="text-sm"
+                          autoFocus
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
                 {currentQuestion.answerType === "yes_no" && (
