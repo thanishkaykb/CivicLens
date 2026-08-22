@@ -1,1 +1,0 @@
-import{c as o}from"./index-CDcSwQvr.js";const s=[["path",{d:"M5 12h14",key:"1ays0h"}],["path",{d:"m12 5 7 7-7 7",key:"xquz4c"}]],r=o("arrow-right",s),a="/assets/logo-Cr29__ze.svg";export{r as A,a as l};
