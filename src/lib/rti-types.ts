@@ -16,7 +16,7 @@ export type RTICategory =
 
 export type AuthorityType = "central" | "state" | "district" | "municipal" | "local_body" | "autonomous" | "unknown";
 
-export type AnswerType = "text" | "select" | "yes_no" | "date" | "number" | "location";
+export type AnswerType = "text" | "select" | "multi_select" | "yes_no" | "date" | "number" | "location";
 
 export type ApplicationType = "rti" | "complaint" | "both";
 

@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AnimatePresence } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -54,6 +56,7 @@ export default function NewRTI() {
   const [answers, setAnswers] = useState<QuestionAnswer[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [isUnknown, setIsUnknown] = useState(false);
+  const [multiSelections, setMultiSelections] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [authority, setAuthority] = useState<AuthorityInfo | null>(null);
@@ -87,23 +90,32 @@ export default function NewRTI() {
 
   const handleAnswer = useCallback(async () => {
     if (!currentQuestion) return;
+    let answerText = "";
+    if (isUnknown) {
+      answerText = "I don't know";
+    } else if (currentQuestion.answerType === "multi_select") {
+      answerText = multiSelections.join(", ") || "";
+    } else {
+      answerText = currentAnswer;
+    }
     const newAnswer: QuestionAnswer = {
       questionId: currentQuestion.id,
       question: currentQuestion.question,
-      answer: isUnknown ? "I don't know" : currentAnswer,
+      answer: answerText,
       isUnknown,
     };
     const updatedAnswers = [...answers, newAnswer];
     setAnswers(updatedAnswers);
     setCurrentAnswer("");
     setIsUnknown(false);
+    setMultiSelections([]);
     const next = await generateQuestions(analysis!, updatedAnswers);
     if (next) {
       setCurrentQuestion(next);
     } else {
       setStep("evidence");
     }
-  }, [currentAnswer, isUnknown, currentQuestion, answers, analysis]);
+  }, [currentAnswer, isUnknown, currentQuestion, answers, analysis, multiSelections]);
 
   const handleFindAuthority = useCallback(async () => {
     setIsGenerating(true);
@@ -254,9 +266,10 @@ export default function NewRTI() {
           <Progress value={progress} className="h-1.5" />
         </div>
 
+        <AnimatePresence mode="wait">
         {/* STEP: Input */}
         {step === "input" && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div key="input" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
             <Card className="border-border/70">
               <CardHeader>
                 <CardTitle className="text-2xl">Tell us what happened</CardTitle>
@@ -267,7 +280,7 @@ export default function NewRTI() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Example: There are many potholes on my street and the streetlights have not been working for several months. Several accidents have happened and nobody seems to be fixing the problem."
-                  className="min-h-[180px] text-base leading-relaxed resize-none"
+                  className="min-h-[220px] text-base leading-relaxed resize-y"
                 />
                 <p className="text-xs text-muted-foreground font-medium">Write naturally. We'll handle the rest.</p>
                 {analysisError && (
@@ -291,7 +304,7 @@ export default function NewRTI() {
 
         {/* STEP: Confirm Analysis */}
         {step === "confirm_analysis" && analysis && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div key="analysis" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
             <Card className="border-border/70">
               <CardHeader>
                 <CardTitle className="text-2xl">Here's what we understood</CardTitle>
@@ -322,7 +335,7 @@ export default function NewRTI() {
 
         {/* STEP: Questions */}
         {step === "questions" && currentQuestion && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div key={`q-${currentQuestion.id}`} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
             <Card className="border-border/70">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -338,17 +351,36 @@ export default function NewRTI() {
                 </div>
 
                 {currentQuestion.answerType === "text" && (
-                  <Textarea value={currentAnswer} onChange={(e) => setCurrentAnswer(e.target.value)} placeholder="Type your answer..." className="min-h-[80px] resize-none" />
+                  <Textarea value={currentAnswer} onChange={(e) => setCurrentAnswer(e.target.value)} placeholder="Type your answer here — include as much detail as you'd like..." className="min-h-[120px] resize-y text-sm leading-relaxed" />
                 )}
                 {currentQuestion.answerType === "select" && currentQuestion.options && (
                   <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
                     {currentQuestion.options.map((opt) => (
-                      <div key={opt} className="flex items-center space-x-2 rounded-lg border border-border/60 px-4 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer">
+                      <div key={opt} className="flex items-center space-x-2 rounded-xl border border-border/60 px-4 py-3 hover:bg-muted/30 transition-all cursor-pointer">
                         <RadioGroupItem value={opt} id={opt} />
-                        <Label htmlFor={opt} className="cursor-pointer text-sm font-normal">{opt}</Label>
+                        <Label htmlFor={opt} className="cursor-pointer text-sm font-normal flex-1">{opt}</Label>
                       </div>
                     ))}
                   </RadioGroup>
+                )}
+                {currentQuestion.answerType === "multi_select" && currentQuestion.options && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Select all that apply</p>
+                    {currentQuestion.options.map((opt) => {
+                      const checked = multiSelections.includes(opt);
+                      return (
+                        <div key={opt}
+                          className={`flex items-center space-x-3 rounded-xl border px-4 py-3 transition-all cursor-pointer ${
+                            checked ? "border-primary/40 bg-primary/5" : "border-border/60 hover:bg-muted/30"
+                          }`}
+                          onClick={() => setMultiSelections((prev) => checked ? prev.filter((s) => s !== opt) : [...prev, opt])}
+                        >
+                          <Checkbox checked={checked} onCheckedChange={() => setMultiSelections((prev) => checked ? prev.filter((s) => s !== opt) : [...prev, opt])} />
+                          <Label className="cursor-pointer text-sm font-normal flex-1">{opt}</Label>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
                 {currentQuestion.answerType === "yes_no" && (
                   <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
@@ -371,8 +403,12 @@ export default function NewRTI() {
                 )}
 
                 <div className="flex gap-3 pt-2">
-                  <Button onClick={handleAnswer} disabled={(!currentAnswer && !isUnknown) || (currentQuestion.answerType === "select" && !currentAnswer)}>
-                    {answers.length > 0 && !currentAnswer && !isUnknown ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
+                  <Button onClick={handleAnswer} className="font-semibold" disabled={
+                    !isUnknown &&
+                    currentQuestion.answerType !== "multi_select" &&
+                    !currentAnswer
+                  }>
+                    {!isUnknown && !currentAnswer && (currentQuestion.answerType === "multi_select" ? multiSelections.length === 0 : true) ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <Button variant="ghost" onClick={() => { setStep("evidence"); }}>Skip all questions</Button>
                 </div>
@@ -383,7 +419,7 @@ export default function NewRTI() {
 
         {/* STEP: Evidence */}
         {step === "evidence" && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div key="evidence" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
             <Card className="border-border/70">
               <CardHeader>
                 <CardTitle className="text-xl">Any supporting evidence?</CardTitle>
@@ -428,7 +464,7 @@ export default function NewRTI() {
 
         {/* STEP: Authority */}
         {step === "authority" && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div key="authority" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
             {isGenerating ? (
               <Card className="border-border/70">
                 <CardContent className="flex flex-col items-center justify-center py-16">
@@ -508,17 +544,19 @@ export default function NewRTI() {
 
         {/* STEP: Draft (generating) */}
         {step === "draft" && !editingDraft && (
+          <motion.div key="draft" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Card className="border-border/70">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="mt-4 text-sm text-muted-foreground">Generating your RTI application...</p>
             </CardContent>
           </Card>
+          </motion.div>
         )}
 
         {/* STEP: Review */}
         {step === "review" && editingDraft && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          <motion.div key="review" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold tracking-tight">Review your RTI</h1>
               <Button onClick={() => setStep("export")} className="gap-2">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
@@ -624,7 +662,7 @@ export default function NewRTI() {
 
         {/* STEP: Export */}
         {step === "export" && editingDraft && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <motion.div key="export" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }} className="space-y-6">
             <div className="text-center">
               <CheckCircle2 className="mx-auto h-12 w-12 text-green-600" />
               <h1 className="mt-4 text-2xl font-bold tracking-tight">Your application is ready</h1>
@@ -672,6 +710,7 @@ export default function NewRTI() {
             </div>
           </motion.div>
         )}
+        </AnimatePresence>
       </div>
     </div>
   );

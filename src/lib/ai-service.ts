@@ -25,12 +25,9 @@ const CATEGORY_DEMO_QUESTIONS: Record<RTICategory, AdaptiveQuestion[]> = {
       answerType: "text",
       allowsUnknown: true,
       category: "location",
-    },
-    {
-      id: "road_type",
-      question: "What type of road problem are you experiencing?",
+    },    { id: "road_type", question: "What type of road problem are you experiencing? (Select all that apply)",
       reason: "Different problems may fall under different departments",
-      answerType: "select",
+      answerType: "multi_select",
       options: ["Potholes", "Broken road surface", "Unpaved/under construction", "Flooding", "Encroachment", "Other"],
       allowsUnknown: true,
       category: "problem_type",
@@ -96,8 +93,10 @@ const CATEGORY_DEMO_QUESTIONS: Record<RTICategory, AdaptiveQuestion[]> = {
     { id: "drain_photos", question: "Do you have photos or videos of the flooding or drainage problem?", reason: "Visual evidence supports your request", answerType: "yes_no", allowsUnknown: false, category: "evidence" },
   ],
   water_supply: [
-    { id: "water_location", question: "Which area or locality is affected by the water supply issue?", reason: "Location determines the responsible water authority", answerType: "text", allowsUnknown: true, category: "location" },
-    { id: "water_type", question: "What is the nature of the water supply problem?", reason: "Different problems fall under different departments or agencies", answerType: "select", options: ["No water supply", "Low water pressure", "Contaminated water", "Irregular supply", "Water logging", "Other"], allowsUnknown: true, category: "problem_type" },
+    { id: "water_location", question: "Which area or locality is affected by the water supply issue?", reason: "Location determines the responsible water authority", answerType: "text", allowsUnknown: true, category: "location" },    { id: "water_type", question: "What is the nature of the water supply problem? (Select all that apply)",
+      reason: "Different problems fall under different departments or agencies",
+      answerType: "multi_select",
+      options: ["No water supply", "Low water pressure", "Contaminated water", "Irregular supply", "Water logging", "Other"], allowsUnknown: true, category: "problem_type" },
     { id: "water_duration", question: "How long has this water supply issue been occurring?", reason: "Duration helps understand the scope of the problem", answerType: "text", allowsUnknown: true, category: "time_period" },
     { id: "water_complaints", question: "Have you complained to any water authority or municipal body about this?", reason: "Previous complaints help identify the responsible department", answerType: "text", allowsUnknown: true, category: "previous_action" },
     { id: "water_photos", question: "Do you have any supporting evidence such as photos or documents?", reason: "Evidence strengthens your application", answerType: "yes_no", allowsUnknown: false, category: "evidence" },
@@ -119,8 +118,10 @@ const CATEGORY_DEMO_QUESTIONS: Record<RTICategory, AdaptiveQuestion[]> = {
     { id: "school_docs", question: "Do you have any supporting documents or photos?", reason: "Evidence strengthens your application", answerType: "yes_no", allowsUnknown: false, category: "evidence" },
   ],
   sanitation_waste: [
-    { id: "waste_location", question: "Where is the sanitation or waste management problem? Please provide the area and city.", reason: "Location identifies the responsible municipal authority", answerType: "text", allowsUnknown: true, category: "location" },
-    { id: "waste_type", question: "What type of sanitation or waste problem are you experiencing?", reason: "Different problems may fall under different departments", answerType: "select", options: ["Garbage not collected", "Open dumping", "Overflowing bins", "Stagnant water", "Stray animals", "Public toilet issues", "Other"], allowsUnknown: true, category: "problem_type" },
+    { id: "waste_location", question: "Where is the sanitation or waste management problem? Please provide the area and city.", reason: "Location identifies the responsible municipal authority", answerType: "text", allowsUnknown: true, category: "location" },    { id: "waste_type", question: "What type of sanitation or waste problem are you experiencing? (Select all that apply)",
+      reason: "Different problems may fall under different departments",
+      answerType: "multi_select",
+      options: ["Garbage not collected", "Open dumping", "Overflowing bins", "Stagnant water", "Stray animals", "Public toilet issues", "Other"], allowsUnknown: true, category: "problem_type" },
     { id: "waste_duration", question: "How long has this been going on?", reason: "Duration helps establish the scope of the issue", answerType: "text", allowsUnknown: true, category: "time_period" },
     { id: "waste_complaints", question: "Have you complained to the municipal corporation or any other authority?", reason: "Previous complaints help identify the responsible department", answerType: "text", allowsUnknown: true, category: "previous_action" },
     { id: "waste_photos", question: "Do you have photos or videos of the issue?", reason: "Visual evidence strengthens your application", answerType: "yes_no", allowsUnknown: false, category: "evidence" },
@@ -204,7 +205,7 @@ export async function analyzeProblem(description: string): Promise<ProblemAnalys
   }
 
   let timePeriod: string | null = null;
-  const timePatterns = [/(\\d+)\\s*(?:months?|weeks?|days?|years?)\\s*(?:ago|back|since)/i];
+  const timePatterns = [/(\d+)\s*(?:months?|weeks?|days?|years?)\s*(?:ago|back|since)/i];
   for (const pattern of timePatterns) {
     const match = pattern.exec(description);
     if (match) { timePeriod = match[0]; break; }
@@ -223,7 +224,7 @@ export async function analyzeProblem(description: string): Promise<ProblemAnalys
     secondaryCategories,
     location,
     timePeriod,
-    statedProblem: description.substring(0, 200),
+    statedProblem: description,
     desiredInformation,
     missingInformation: [!location ? "Specific location/address" : null, !timePeriod ? "Duration of the problem" : null].filter(Boolean) as string[],
     recommendedQuestionCategories: ["location", "time_period", "previous_action", "desired_outcome"],
