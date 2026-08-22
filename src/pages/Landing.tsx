@@ -48,7 +48,7 @@ export default function Landing() {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.04] via-primary/[0.01] to-transparent" />
-        <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-24 md:pt-32 lg:pt-36">
+        <div className="relative mx-auto max-w-6xl px-6 pb-20 pt-16 md:pt-20 lg:pt-24">
           <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } } }} className="mx-auto max-w-3xl text-center">
             <motion.div variants={fup}>
               <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-4 py-1.5 text-xs font-semibold tracking-wide text-accent">
@@ -76,7 +76,7 @@ export default function Landing() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="border-t border-border/50 bg-muted/20 py-24">
+      <section id="how-it-works" className="border-t border-border/50 bg-muted/20 py-20">
         <div className="mx-auto max-w-6xl px-6">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={{ visible: { transition: { staggerChildren: 0.08 } } }} className="text-center">
             <motion.p variants={fup} className="text-xs font-bold uppercase tracking-[0.2em] text-primary">How It Works</motion.p>
@@ -101,7 +101,7 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-24">
+      <section id="features" className="py-20">
         <div className="mx-auto max-w-6xl px-6">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={{ visible: { transition: { staggerChildren: 0.08 } } }} className="text-center">
             <motion.p variants={fup} className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Why CivicLens</motion.p>
@@ -124,7 +124,7 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-border/50 bg-muted/20 py-24">
+      <section className="border-t border-border/50 bg-muted/20 py-20">
         <div className="mx-auto max-w-6xl px-6 text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
             <motion.h2 variants={fup} className="text-3xl font-bold tracking-tight">
@@ -143,7 +143,7 @@ export default function Landing() {
       </section>
 
       {/* About */}
-      <section id="about" className="py-24">
+      <section id="about" className="py-20">
         <div className="mx-auto max-w-3xl px-6">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
             <motion.h2 variants={fup} className="text-2xl font-bold tracking-tight">About CivicLens</motion.h2>

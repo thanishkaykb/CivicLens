@@ -665,7 +665,7 @@ export default function NewRTI() {
           <motion.div key="review" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold tracking-tight">Review your RTI</h1>
-              <Button onClick={() => setStep("export")} className="gap-2 font-semibold">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
+              <Button onClick={() => { setStep("export"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="gap-2 font-semibold">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
             </div>
 
             {/* Edit Details — jump back to any step */}
@@ -836,7 +836,7 @@ export default function NewRTI() {
             )}
 
             <div className="flex gap-3 pt-2 pb-8">
-              <Button onClick={() => setStep("export")} className="gap-2 font-semibold">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
+              <Button onClick={() => { setStep("export"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="gap-2 font-semibold">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
               <Button variant="outline" onClick={() => setStep("authority")}>Back</Button>
               <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft} className="ml-auto text-muted-foreground"><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
             </div>
@@ -846,15 +846,16 @@ export default function NewRTI() {
         {/* STEP: Export */}
         {step === "export" && editingDraft && (
           <motion.div key="export" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }} className="space-y-6">
-            <div className="text-center">
-              <CheckCircle2 className="mx-auto h-12 w-12 text-green-600" />
-              <h1 className="mt-4 text-2xl font-bold tracking-tight">Your application is ready</h1>
-              <p className="mt-2 text-sm text-muted-foreground">Download in your preferred format. Each version is professionally formatted and ready to submit.</p>
+            <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 px-5 py-4">
+              <CheckCircle2 className="h-6 w-6 shrink-0 text-green-600" />
+              <div>
+                <h1 className="text-lg font-bold tracking-tight">Your application is ready</h1>
+                <p className="text-xs text-green-700/70">Download in your preferred format below.</p>
+              </div>
             </div>
 
             <Card className="border-border/70">
-              <CardHeader><CardTitle className="text-base">Export Options</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 pt-5">
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button variant="default" className="flex-1 justify-start gap-3 h-auto py-4" onClick={handleCopyText}>
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-foreground/20"><Copy className="h-5 w-5" /></div>
