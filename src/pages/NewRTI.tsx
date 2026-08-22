@@ -259,8 +259,8 @@ export default function NewRTI() {
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="border-border/70">
               <CardHeader>
-                <CardTitle className="text-2xl">What happened?</CardTitle>
-                <p className="text-sm text-muted-foreground">Tell us about the problem in your own words. You don't need to know RTI terminology or government procedures.</p>
+                <CardTitle className="text-2xl">Tell us what happened</CardTitle>
+                <p className="text-sm text-muted-foreground">Describe the problem in your own words. No government terminology, no legal language — just your story.</p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Textarea
@@ -269,7 +269,7 @@ export default function NewRTI() {
                   placeholder="Example: There are many potholes on my street and the streetlights have not been working for several months. Several accidents have happened and nobody seems to be fixing the problem."
                   className="min-h-[180px] text-base leading-relaxed resize-none"
                 />
-                <p className="text-xs text-muted-foreground">You can write naturally. Don't worry about getting the wording right.</p>
+                <p className="text-xs text-muted-foreground font-medium">Write naturally. We'll handle the rest.</p>
                 {analysisError && (
                   <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
                     <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -278,10 +278,10 @@ export default function NewRTI() {
                 )}
                 <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                   <Button onClick={handleAnalyze} disabled={!description.trim() || isAnalyzing} className="gap-2">
-                    {isAnalyzing ? <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing...</> : <><Search className="h-4 w-4" /> Analyze my problem</>}
+                    {isAnalyzing ? <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing your problem...</> : <><Search className="h-4 w-4" /> Analyze my problem</>}
                   </Button>
                   <Button variant="outline" onClick={() => { setAnalysis({ primaryCategory: "other", secondaryCategories: [], location: null, timePeriod: null, statedProblem: description, desiredInformation: ["Information about the problem"], missingInformation: [], recommendedQuestionCategories: [] }); setStep("confirm_analysis"); }}>
-                    I don't know what information I need
+                    I don't know where to start
                   </Button>
                 </div>
               </CardContent>
@@ -295,6 +295,7 @@ export default function NewRTI() {
             <Card className="border-border/70">
               <CardHeader>
                 <CardTitle className="text-2xl">Here's what we understood</CardTitle>
+                <p className="text-sm text-muted-foreground">Take a moment to review. If anything is missing or incorrect, go back and refine your description.</p>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="space-y-3">
@@ -309,8 +310,7 @@ export default function NewRTI() {
                   {analysis.missingInformation.length > 0 && (
                     <div><span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">We'll ask about</span><ul className="mt-1 space-y-1">{analysis.missingInformation.map((m, i) => <li key={i} className="flex items-start gap-2 text-sm"><Info className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" />{m}</li>)}</ul></div>
                   )}
-                </div>
-                <p className="text-sm font-medium text-muted-foreground">Is this understanding correct?</p>
+                </div>                    <p className="text-sm font-semibold text-muted-foreground">Is this correct?</p>
                 <div className="flex gap-3">
                   <Button onClick={handleStartQuestions} className="gap-2">Yes, continue <ArrowRight className="h-4 w-4" /></Button>
                   <Button variant="outline" onClick={() => setStep("input")}><Edit3 className="mr-2 h-4 w-4" /> Edit</Button>
@@ -329,7 +329,7 @@ export default function NewRTI() {
                   <CardTitle className="text-xl">A few questions</CardTitle>
                   <Badge variant="secondary">{answers.length + 1}</Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">Answer only what you know. Skip what you don't.</p>
+                <p className="text-xs text-muted-foreground">Answer what you can. Skip what you don't know — that's expected.</p>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
@@ -386,14 +386,14 @@ export default function NewRTI() {
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="border-border/70">
               <CardHeader>
-                <CardTitle className="text-xl">Do you have any supporting evidence?</CardTitle>
-                <p className="text-sm text-muted-foreground">Photos, documents, or other evidence can strengthen your application. This is optional.</p>
+                <CardTitle className="text-xl">Any supporting evidence?</CardTitle>
+                <p className="text-sm text-muted-foreground">Photos, documents, or other files that support your case. Completely optional — you can continue without uploading anything.</p>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="rounded-lg border-2 border-dashed border-border/60 p-6 text-center hover:border-primary/40 transition-colors">
                   <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
                   <p className="mt-2 text-sm text-muted-foreground">Click to upload or drag and drop</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Images, PDFs, DOC/DOCX files</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Images, PDFs, DOC/DOCX — anything relevant</p>
                   <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" onChange={handleFileUpload} className="hidden" />
                   <Button variant="outline" size="sm" className="mt-3" onClick={() => fileInputRef.current?.click()}>
                     <Upload className="mr-2 h-3.5 w-3.5" /> Choose Files
@@ -402,7 +402,7 @@ export default function NewRTI() {
 
                 {evidence.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Uploaded Evidence</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Uploaded Evidence</p>
                     {evidence.map((ev) => (
                       <div key={ev.id} className="flex items-center justify-between rounded-lg border border-border/60 px-4 py-2.5">
                         <div className="flex items-center gap-3 min-w-0">
@@ -416,8 +416,8 @@ export default function NewRTI() {
                 )}
 
                 <div className="flex gap-3 pt-2">
-                  <Button onClick={handleFindAuthority} disabled={isGenerating} className="gap-2">
-                    {isGenerating ? <><Loader2 className="h-4 w-4 animate-spin" /> Finding authority...</> : <>Find Authority <ArrowRight className="h-4 w-4" /></>}
+                  <Button onClick={handleFindAuthority} disabled={isGenerating} className="gap-2 font-semibold">
+                    {isGenerating ? <><Loader2 className="h-4 w-4 animate-spin" /> Identifying authority...</> : <>Identify Authority <ArrowRight className="h-4 w-4" /></>}
                   </Button>
                   <Button variant="ghost" onClick={handleFindAuthority}>Continue without evidence</Button>
                 </div>
@@ -440,7 +440,7 @@ export default function NewRTI() {
               <Card className="border-border/70">
                 <CardHeader>
                   <CardTitle className="text-xl">Suggested Public Authority</CardTitle>
-                  <p className="text-xs text-muted-foreground">Please verify the authority before submission.</p>
+                  <p className="text-xs text-muted-foreground">Review this carefully. Confirm the authority is correct before generating your application.</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -628,7 +628,7 @@ export default function NewRTI() {
             <div className="text-center">
               <CheckCircle2 className="mx-auto h-12 w-12 text-green-600" />
               <h1 className="mt-4 text-2xl font-bold tracking-tight">Your application is ready</h1>
-              <p className="mt-2 text-sm text-muted-foreground">Export your RTI application in your preferred format.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Download in your preferred format. Each version is professionally formatted and ready to submit.</p>
             </div>
 
             <Card className="border-border/70">
@@ -650,11 +650,11 @@ export default function NewRTI() {
             </Card>
 
             <Card className="border-border/70">
-              <CardHeader><CardTitle className="text-base">Submission Guide</CardTitle></CardHeader>
+              <CardHeader>              <CardTitle className="text-base">Submission Guide</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-start gap-2"><Landmark className="h-4 w-4 mt-0.5 shrink-0 text-primary" /><div><p className="font-medium text-foreground">Where to submit</p><p>{authority?.publicAuthority || "The identified public authority"}</p></div></div>
+                <div className="flex items-start gap-2"><Landmark className="h-4 w-4 mt-0.5 shrink-0 text-primary" /><div><p className="font-bold text-foreground">Where to submit</p><p>{authority?.publicAuthority || "The identified public authority"}</p></div></div>
                 <Separator />
-                <div className="flex items-start gap-2"><Download className="h-4 w-4 mt-0.5 shrink-0 text-primary" /><div><p className="font-medium text-foreground">How to submit</p><p>{authority?.submissionMethod || "By post or in person at the relevant office"}</p></div></div>
+                <div className="flex items-start gap-2"><Download className="h-4 w-4 mt-0.5 shrink-0 text-primary" /><div><p className="font-bold text-foreground">How to submit</p><p>{authority?.submissionMethod || "By post or in person at the relevant office"}</p></div></div>
                 {authority?.sourceUrl && (
                   <>
                     <Separator />
@@ -662,7 +662,7 @@ export default function NewRTI() {
                   </>
                 )}
                 <Separator />
-                <div className="rounded-lg bg-muted/40 p-3 text-xs"><strong className="text-foreground">Important:</strong> Please verify the authority details and submission process before filing. An RTI is a request for information, not a complaint or repair request.</div>
+                <div className="rounded-lg bg-muted/30 p-3 text-xs"><strong className="text-foreground">Important:</strong> An RTI is a request for information — not a complaint or repair request. Always verify authority details and submission procedures before filing.</div>
               </CardContent>
             </Card>
 

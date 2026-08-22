@@ -93,7 +93,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/new-rti" element={<NewRTI />} />
               <Route path="/my-rtis" element={<RequireAuth><MyRTIs /></RequireAuth>} />
               <Route path="/about" element={<About />} />
-              <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              <Route path="/dashboard" element={<RequireAuth><MyRTIs /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
