@@ -105,10 +105,50 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     const userId = (await ctx.auth.getUserIdentity())?.subject;
     if (!userId) throw new Error("Not authenticated");
-
     const app = await ctx.db.get(args.applicationId);
     if (!app || app.userId !== userId) throw new Error("Not found or unauthorized");
-
     await ctx.db.delete(args.applicationId);
+  },
+});
+
+// Save a draft (create or update)
+export const saveDraft = mutation({
+  args: {
+    applicationId: v.optional(v.id("rtiApplications")),
+    title: v.string(),
+    originalDescription: v.string(),
+    problemAnalysis: v.optional(v.any()),
+    answers: v.optional(v.any()),
+    evidence: v.optional(v.any()),
+    authority: v.optional(v.any()),
+    draft: v.optional(v.any()),
+    status: v.optional(v.union(
+      v.literal("draft"), v.literal("ready_to_submit"),
+      v.literal("submitted"), v.literal("awaiting_response"),
+      v.literal("response_received"), v.literal("closed")
+    )),
+  },
+  handler: async (ctx, args) => {
+    const userId = (await ctx.auth.getUserIdentity())?.subject;
+    if (!userId) throw new Error("Not authenticated");
+    const now = new Date().toISOString();
+    if (args.applicationId) {
+      const app = await ctx.db.get(args.applicationId);
+      if (!app || app.userId !== userId) throw new Error("Not found");
+      const { applicationId: _appId, ...patchData } = args;
+      await ctx.db.patch(args.applicationId, { ...patchData, updatedAt: now });
+      return args.applicationId;
+    }
+    return await ctx.db.insert("rtiApplications", {
+      userId, title: args.title, status: args.status || "draft",
+      originalDescription: args.originalDescription,
+      problemAnalysis: args.problemAnalysis,
+      answers: args.answers,
+      evidence: args.evidence,
+      authority: args.authority,
+      draft: args.draft,
+      applicationType: "rti",
+      createdAt: now, updatedAt: now,
+    });
   },
 });

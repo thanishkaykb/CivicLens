@@ -1,6 +1,9 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +18,7 @@ import { toast } from "sonner";
 import {
   ArrowRight, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Upload, X,
   FileText, Search, Download, Edit3, RotateCcw, Plus, Trash2, ChevronDown, ChevronUp,
-  Landmark, Info, Eye,
+  Landmark, Info, Eye, Save,
 } from "lucide-react";
 import type {
   ProblemAnalysis, AdaptiveQuestion, QuestionAnswer, AuthorityInfo,
@@ -65,7 +68,48 @@ export default function NewRTI() {
   const [isExporting, setIsExporting] = useState(false);
   const [editMode, setEditMode] = useState<Record<string, boolean>>({});
   const [editValues, setEditValues] = useState<Record<string, string>>({});
+  const [applicationId, setApplicationId] = useState<Id<"rtiApplications"> | null>(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchParams] = useSearchParams();
+  const saveDraftMutation = useMutation(api.rtiApplications.saveDraft);
+  const existingDraft = useQuery(
+    api.rtiApplications.get,
+    searchParams.get("id") ? { applicationId: searchParams.get("id") as Id<"rtiApplications"> } : "skip"
+  );
+
+  useEffect(() => {
+    if (existingDraft && existingDraft._id) {
+      setApplicationId(existingDraft._id);
+      setDescription(existingDraft.originalDescription || "");
+      if (existingDraft.problemAnalysis) setAnalysis(existingDraft.problemAnalysis);
+      if (existingDraft.answers) setAnswers(existingDraft.answers);
+      if (existingDraft.authority) setAuthority(existingDraft.authority);
+      if (existingDraft.draft) { setDraft(existingDraft.draft); setEditingDraft({ ...existingDraft.draft }); setStep("review"); }
+      else if (existingDraft.authority) setStep("authority");
+      else if (existingDraft.answers?.length > 0) setStep("evidence");
+      else if (existingDraft.problemAnalysis) setStep("confirm_analysis");
+    }
+  }, [existingDraft]);
+
+  const handleSaveDraft = useCallback(async () => {
+    setIsSavingDraft(true);
+    try {
+      const id = await saveDraftMutation({
+        applicationId: applicationId || undefined,
+        title: draft?.title || analysis?.statedProblem?.substring(0, 80) || "RTI Application",
+        originalDescription: description,
+        problemAnalysis: analysis || undefined,
+        answers: answers.length > 0 ? answers : undefined,
+        authority: authority || undefined,
+        draft: editingDraft || draft || undefined,
+        status: editingDraft ? "ready_to_submit" : "draft",
+      });
+      setApplicationId(id);
+      toast.success("Draft saved");
+    } catch { toast.error("Could not save draft"); }
+    finally { setIsSavingDraft(false); }
+  }, [applicationId, description, analysis, answers, authority, editingDraft, draft, saveDraftMutation]);
 
   const handleAnalyze = useCallback(async () => {
     if (!description.trim()) { toast.error("Please describe your problem"); return; }
@@ -133,7 +177,8 @@ export default function NewRTI() {
       const rti = await generateRTI(analysis!, answers, authority, applicantName, applicantAddress);
       setDraft(rti);
       setEditingDraft({ ...rti });
-    } catch { toast.error("Could not generate RTI draft."); }
+      setStep("review");
+    } catch { toast.error("Could not generate RTI draft. Please try again."); }
     finally { setIsGenerating(false); }
   }, [analysis, answers, authority, applicantName, applicantAddress]);
 
@@ -427,6 +472,7 @@ export default function NewRTI() {
                     {!isUnknown && !currentAnswer && (currentQuestion.answerType === "multi_select" ? multiSelections.length === 0 : true) ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <Button variant="ghost" onClick={() => { setStep("evidence"); }}>Skip all questions</Button>
+                  <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft} className="ml-auto text-muted-foreground"><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
                 </div>
               </CardContent>
             </Card>
@@ -472,6 +518,7 @@ export default function NewRTI() {
                     {isGenerating ? <><Loader2 className="h-4 w-4 animate-spin" /> Identifying authority...</> : <>Identify Authority <ArrowRight className="h-4 w-4" /></>}
                   </Button>
                   <Button variant="ghost" onClick={handleFindAuthority}>Continue without evidence</Button>
+                  <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft} className="ml-auto text-muted-foreground"><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
                 </div>
               </CardContent>
             </Card>
@@ -543,6 +590,7 @@ export default function NewRTI() {
                       {isGenerating ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <>Generate RTI Application <ArrowRight className="h-4 w-4" /></>}
                     </Button>
                     <Button variant="outline" onClick={() => setStep("questions")}>Go Back</Button>
+                    <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft} className="ml-auto text-muted-foreground"><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -670,8 +718,9 @@ export default function NewRTI() {
             </Card>
 
             <div className="flex gap-3 pt-2 pb-8">
-              <Button onClick={() => setStep("export")} className="gap-2">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
+              <Button onClick={() => setStep("export")} className="gap-2 font-semibold">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
               <Button variant="outline" onClick={() => setStep("authority")}>Back</Button>
+              <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft} className="ml-auto text-muted-foreground"><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
             </div>
           </motion.div>
         )}
