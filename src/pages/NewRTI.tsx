@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import {
   ArrowRight, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Upload, X,
   FileText, Search, Download, Edit3, RotateCcw, Plus, Trash2, ChevronDown, ChevronUp,
-  Landmark, Info, Eye, Save,
+  Landmark, Info, Eye, Save, Copy,
 } from "lucide-react";
 import type {
   ProblemAnalysis, AdaptiveQuestion, QuestionAnswer, AuthorityInfo,
@@ -217,6 +217,15 @@ export default function NewRTI() {
   };
 
   const removeEvidence = (id: string) => setEvidence((prev) => prev.filter((e) => e.id !== id));
+
+  const handleCopyText = async () => {
+    if (!editingDraft) return;
+    try {
+      const text = generateText(editingDraft, authority);
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard!");
+    } catch { toast.error("Could not copy. Please try again."); }
+  };
 
   const handleExportText = async () => {
     if (!editingDraft) return;
@@ -846,17 +855,23 @@ export default function NewRTI() {
             <Card className="border-border/70">
               <CardHeader><CardTitle className="text-base">Export Options</CardTitle></CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start gap-3 h-auto py-4" onClick={handleExportText} disabled={isExporting}>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><FileText className="h-5 w-5 text-primary" /></div>
-                  <div className="text-left"><p className="font-medium">Plain Text</p><p className="text-xs text-muted-foreground">Copy or download as .txt</p></div>
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button variant="default" className="flex-1 justify-start gap-3 h-auto py-4" onClick={handleCopyText}>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-foreground/20"><Copy className="h-5 w-5" /></div>
+                    <div className="text-left"><p className="font-semibold">Copy to Clipboard</p><p className="text-xs opacity-80">Paste into any document or email</p></div>
+                  </Button>
+                  <Button variant="outline" className="flex-1 justify-start gap-3 h-auto py-4" onClick={handleExportText} disabled={isExporting}>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><FileText className="h-5 w-5 text-primary" /></div>
+                    <div className="text-left"><p className="font-medium">Download .txt</p><p className="text-xs text-muted-foreground">Plain text file</p></div>
+                  </Button>
+                </div>
                 <Button variant="outline" className="w-full justify-start gap-3 h-auto py-4" onClick={handleExportWord} disabled={isExporting}>
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><FileText className="h-5 w-5 text-blue-600" /></div>
-                  <div className="text-left"><p className="font-medium">Microsoft Word</p><p className="text-xs text-muted-foreground">Download as .docx</p></div>
+                  <div className="text-left"><p className="font-medium">Download Word (.docx)</p><p className="text-xs text-muted-foreground">12pt Times New Roman, 1.5 line spacing, professional formatting</p></div>
                 </Button>
                 <Button variant="outline" className="w-full justify-start gap-3 h-auto py-4" onClick={handleExportPDF} disabled={isExporting}>
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/10"><FileText className="h-5 w-5 text-red-600" /></div>
-                  <div className="text-left"><p className="font-medium">PDF</p><p className="text-xs text-muted-foreground">Download as .pdf</p></div>
+                  <div className="text-left"><p className="font-medium">Download PDF</p><p className="text-xs text-muted-foreground">12pt Times, proper margins, page numbers, ready to print</p></div>
                 </Button>
               </CardContent>
             </Card>

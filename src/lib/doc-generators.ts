@@ -1,6 +1,6 @@
 /**
  * Document generation utilities for CivicLens RTI applications.
- * Supports Text, Word (.docx), and PDF export.
+ * Professional formatting: 12pt body, 14pt heading, Times New Roman / Calibri.
  */
 
 import type { RTIDraft, AuthorityInfo, EvidenceItem } from "./rti-types";
@@ -15,7 +15,6 @@ export function generateText(draft: RTIDraft, authority: AuthorityInfo | null): 
   lines.push("");
   lines.push(`Date: ${draft.date}`);
   lines.push("");
-  lines.push("─".repeat(60));
   lines.push("");
 
   if (authority) {
@@ -26,13 +25,11 @@ export function generateText(draft: RTIDraft, authority: AuthorityInfo | null): 
     if (authority.department) lines.push(`Department: ${authority.department}`);
     if (authority.officialAddress) lines.push(authority.officialAddress);
     lines.push("");
-    lines.push("─".repeat(60));
     lines.push("");
   }
 
   lines.push(`SUBJECT: ${draft.subject}`);
   lines.push("");
-  lines.push("─".repeat(60));
   lines.push("");
   lines.push("Respected Sir/Madam,");
   lines.push("");
@@ -42,25 +39,24 @@ export function generateText(draft: RTIDraft, authority: AuthorityInfo | null): 
   lines.push("");
 
   draft.informationRequests.forEach((req, i) => {
-    lines.push(`${i + 1}. ${req.text}`);
+    lines.push(`  ${i + 1}. ${req.text}`);
     lines.push("");
   });
 
-  lines.push("─".repeat(60));
   lines.push("");
   lines.push("PREFERRED FORMAT:");
   lines.push(draft.preferredFormat);
   lines.push("");
-  lines.push("─".repeat(60));
   lines.push("");
+
   lines.push("APPLICANT DETAILS:");
   lines.push(`Name: ${draft.applicantName}`);
   lines.push(`Address: ${draft.applicantAddress}`);
   lines.push(`Email: ${draft.applicantEmail}`);
   lines.push(`Phone: ${draft.applicantPhone}`);
   lines.push("");
-  lines.push("─".repeat(60));
   lines.push("");
+
   lines.push(draft.closingStatement);
   lines.push("");
   lines.push("");
@@ -70,11 +66,11 @@ export function generateText(draft: RTIDraft, authority: AuthorityInfo | null): 
   lines.push("________________________");
   lines.push(`(${draft.applicantName})`);
   lines.push(`Date: ${draft.date}`);
-  lines.push("");
 
   if (authority) {
     lines.push("");
-    lines.push("─".repeat(60));
+    lines.push("");
+    lines.push("---");
     lines.push("SOURCE VERIFICATION");
     lines.push(`Source: ${authority.sourceTitle}`);
     lines.push(`URL: ${authority.sourceUrl}`);
@@ -97,261 +93,126 @@ export async function generateWord(draft: RTIDraft, authority: AuthorityInfo | n
     Paragraph,
     TextRun,
     AlignmentType,
-    HeadingLevel,
     BorderStyle,
-    TabStopType,
-    TabStopPosition,
-    PageNumber,
-    Footer,
-    Header,
-    SectionType,
     convertInchesToTwip,
   } = await import("docx");
 
-  const sections: any[] = [];
   const children: any[] = [];
 
-  // Title
-  children.push(
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 200 },
-      children: [
-        new TextRun({
-          text: draft.title.toUpperCase(),
-          bold: true,
-          size: 28,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
+  const FONT = "Times New Roman";
+  const BODY = 24;        // 12pt in half-points
+  const HEADING = 28;     // 14pt
+  const SMALL = 20;       // 10pt
+  const LINE_SPACING = 360; // 1.5 line spacing (240 = single)
+  const AFTER = 120;
 
-  // Date
-  children.push(
-    new Paragraph({
-      alignment: AlignmentType.RIGHT,
-      spacing: { after: 200 },
-      children: [
-        new TextRun({
-          text: `Date: ${draft.date}`,
-          size: 22,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
-
-  // Separator
-  children.push(
-    new Paragraph({
-      spacing: { after: 200 },
-      border: {
-        bottom: {
-          color: "999999",
-          space: 1,
-          style: BorderStyle.SINGLE,
-          size: 1,
-        },
-      },
-      children: [],
-    })
-  );
-
-  // Authority details
-  if (authority) {
-    const authorityLines = [
-      "TO,",
-      "",
-      authority.addressedTo || "The Public Information Officer",
-      authority.publicAuthority,
-      authority.department ? `Department: ${authority.department}` : null,
-      authority.officialAddress,
-    ].filter(Boolean);
-
-    for (const line of authorityLines) {
-      children.push(
-        new Paragraph({
-          spacing: { after: 60 },
-          children: [
-            new TextRun({
-              text: line || "",
-              size: 22,
-              font: "Calibri",
-            }),
-          ],
-        })
-      );
-    }
-
+  const addBodyText = (text: string, opts?: { bold?: boolean; size?: number; align?: typeof AlignmentType[keyof typeof AlignmentType]; spacingBefore?: number; spacingAfter?: number; indent?: number }) => {
+    const { bold = false, size = BODY, align = AlignmentType.LEFT, spacingBefore = 0, spacingAfter = AFTER, indent = 0 } = opts || {};
     children.push(
       new Paragraph({
-        spacing: { before: 200, after: 200 },
+        alignment: align,
+        spacing: { before: spacingBefore, after: spacingAfter, line: LINE_SPACING },
+        indent: indent ? { left: convertInchesToTwip(indent) } : undefined,
+        children: [
+          new TextRun({ text, bold, size, font: FONT }),
+        ],
+      })
+    );
+  };
+
+  const addSeparator = () => {
+    children.push(
+      new Paragraph({
+        spacing: { before: 80, after: 80 },
         border: {
-          bottom: {
-            color: "999999",
-            space: 1,
-            style: BorderStyle.SINGLE,
-            size: 1,
-          },
+          bottom: { color: "BBBBBB", space: 1, style: BorderStyle.SINGLE, size: 1 },
         },
         children: [],
       })
     );
+  };
+
+  // Title
+  addBodyText(draft.title.toUpperCase(), { bold: true, size: HEADING, align: AlignmentType.CENTER, spacingAfter: 200 });
+
+  // Date - right aligned
+  children.push(
+    new Paragraph({
+      alignment: AlignmentType.RIGHT,
+      spacing: { after: 200, line: LINE_SPACING },
+      children: [
+        new TextRun({ text: `Date: ${draft.date}`, size: BODY, font: FONT }),
+      ],
+    })
+  );
+
+  addSeparator();
+
+  // Authority
+  if (authority) {
+    addBodyText("TO,", { spacingAfter: 60 });
+    addBodyText(authority.addressedTo || "The Public Information Officer", { spacingAfter: 60 });
+    addBodyText(authority.publicAuthority, { bold: true, spacingAfter: 60 });
+    if (authority.department) addBodyText(`Department: ${authority.department}`, { spacingAfter: 60 });
+    if (authority.officialAddress) addBodyText(authority.officialAddress, { spacingAfter: 60 });
+    addSeparator();
   }
 
   // Subject
   children.push(
     new Paragraph({
-      spacing: { before: 200, after: 200 },
+      spacing: { before: 120, after: 120, line: LINE_SPACING },
       children: [
-        new TextRun({
-          text: "SUBJECT: ",
-          bold: true,
-          size: 22,
-          font: "Calibri",
-        }),
-        new TextRun({
-          text: draft.subject,
-          size: 22,
-          font: "Calibri",
-        }),
+        new TextRun({ text: "SUBJECT: ", bold: true, size: BODY, font: FONT }),
+        new TextRun({ text: draft.subject, size: BODY, font: FONT }),
       ],
     })
   );
 
-  // Separator
-  children.push(
-    new Paragraph({
-      spacing: { after: 200 },
-      border: {
-        bottom: {
-          color: "999999",
-          space: 1,
-          style: BorderStyle.SINGLE,
-          size: 1,
-        },
-      },
-      children: [],
-    })
-  );
+  addSeparator();
 
-  // Salutation and introduction
-  children.push(
-    new Paragraph({
-      spacing: { before: 200, after: 200 },
-      children: [
-        new TextRun({
-          text: "Respected Sir/Madam,",
-          size: 22,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
+  // Salutation
+  addBodyText("Respected Sir/Madam,", { spacingAfter: 160 });
 
-  children.push(
-    new Paragraph({
-      spacing: { after: 200 },
-      children: [
-        new TextRun({
-          text: draft.introduction,
-          size: 22,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
+  // Introduction
+  addBodyText(draft.introduction, { spacingAfter: 160 });
 
-  // Information requests heading
-  children.push(
-    new Paragraph({
-      spacing: { before: 200, after: 100 },
-      children: [
-        new TextRun({
-          text: "I request the following information under the Right to Information Act, 2005:",
-          size: 22,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
+  // Requests heading
+  addBodyText("I request the following information under the Right to Information Act, 2005:", { bold: true, spacingAfter: 120 });
 
-  // Numbered information requests
+  // Numbered requests
   draft.informationRequests.forEach((req, i) => {
     children.push(
       new Paragraph({
-        spacing: { after: 120 },
-        indent: { left: convertInchesToTwip(0.5) },
+        spacing: { after: 100, line: LINE_SPACING },
+        indent: { left: convertInchesToTwip(0.4) },
         children: [
-          new TextRun({
-            text: `${i + 1}. ${req.text}`,
-            size: 22,
-            font: "Calibri",
-          }),
+          new TextRun({ text: `${i + 1}. `, bold: true, size: BODY, font: FONT }),
+          new TextRun({ text: req.text, size: BODY, font: FONT }),
         ],
       })
     );
   });
 
+  children.push(new Paragraph({ spacing: { after: 80 }, children: [] }));
+
+  addSeparator();
+
   // Preferred format
   children.push(
     new Paragraph({
-      spacing: { before: 300, after: 100 },
-      border: {
-        top: {
-          color: "999999",
-          space: 1,
-          style: BorderStyle.SINGLE,
-          size: 1,
-        },
-      },
+      spacing: { before: 80, after: 80, line: LINE_SPACING },
       children: [
-        new TextRun({
-          text: "PREFERRED FORMAT: ",
-          bold: true,
-          size: 22,
-          font: "Calibri",
-        }),
-        new TextRun({
-          text: draft.preferredFormat,
-          size: 22,
-          font: "Calibri",
-        }),
+        new TextRun({ text: "PREFERRED FORMAT: ", bold: true, size: BODY, font: FONT }),
+        new TextRun({ text: draft.preferredFormat, size: BODY, font: FONT }),
       ],
     })
   );
 
-  // Separator
-  children.push(
-    new Paragraph({
-      spacing: { after: 200 },
-      border: {
-        bottom: {
-          color: "999999",
-          space: 1,
-          style: BorderStyle.SINGLE,
-          size: 1,
-        },
-      },
-      children: [],
-    })
-  );
+  addSeparator();
 
   // Applicant details
-  children.push(
-    new Paragraph({
-      spacing: { before: 200, after: 100 },
-      children: [
-        new TextRun({
-          text: "APPLICANT DETAILS:",
-          bold: true,
-          size: 22,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
+  addBodyText("APPLICANT DETAILS:", { bold: true, spacingAfter: 80 });
 
   const applicantLines = [
     { label: "Name: ", value: draft.applicantName },
@@ -363,163 +224,72 @@ export async function generateWord(draft: RTIDraft, authority: AuthorityInfo | n
   for (const line of applicantLines) {
     children.push(
       new Paragraph({
-        spacing: { after: 60 },
+        spacing: { after: 60, line: LINE_SPACING },
         children: [
-          new TextRun({
-            text: line.label,
-            bold: true,
-            size: 22,
-            font: "Calibri",
-          }),
-          new TextRun({
-            text: line.value,
-            size: 22,
-            font: "Calibri",
-          }),
+          new TextRun({ text: line.label, bold: true, size: BODY, font: FONT }),
+          new TextRun({ text: line.value, size: BODY, font: FONT }),
         ],
       })
     );
   }
 
-  // Separator
-  children.push(
-    new Paragraph({
-      spacing: { before: 200, after: 200 },
-      border: {
-        bottom: {
-          color: "999999",
-          space: 1,
-          style: BorderStyle.SINGLE,
-          size: 1,
-        },
-      },
-      children: [],
-    })
-  );
+  addSeparator();
 
-  // Closing statement
+  // Closing
+  addBodyText(draft.closingStatement, { spacingAfter: 200 });
+
+  // Signature block
+  children.push(new Paragraph({ spacing: { after: 60 }, children: [] }));
+  children.push(new Paragraph({ spacing: { after: 60 }, children: [] }));
+
+  addBodyText("Yours faithfully,", { spacingAfter: 300 });
+
   children.push(
     new Paragraph({
-      spacing: { after: 200 },
+      spacing: { after: 60, line: LINE_SPACING },
       children: [
-        new TextRun({
-          text: draft.closingStatement,
-          size: 22,
-          font: "Calibri",
-        }),
+        new TextRun({ text: "________________________", size: BODY, font: FONT }),
       ],
     })
   );
 
-  // Signature
-  children.push(
-    new Paragraph({
-      spacing: { before: 600, after: 60 },
-      children: [
-        new TextRun({
-          text: "Yours faithfully,",
-          size: 22,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
+  addBodyText(`(${draft.applicantName})`, { spacingAfter: 60 });
+  addBodyText(`Date: ${draft.date}`, { spacingAfter: 60 });
 
-  children.push(
-    new Paragraph({
-      spacing: { before: 400, after: 60 },
-      children: [
-        new TextRun({
-          text: "________________________",
-          size: 22,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
-
-  children.push(
-    new Paragraph({
-      spacing: { after: 60 },
-      children: [
-        new TextRun({
-          text: `(${draft.applicantName})`,
-          size: 22,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
-
-  children.push(
-    new Paragraph({
-      spacing: { after: 200 },
-      children: [
-        new TextRun({
-          text: `Date: ${draft.date}`,
-          size: 22,
-          font: "Calibri",
-        }),
-      ],
-    })
-  );
-
-  // Source verification
+  // Source verification footer
   if (authority) {
+    children.push(new Paragraph({ spacing: { before: 300 }, children: [] }));
     children.push(
       new Paragraph({
-        spacing: { before: 400, after: 100 },
         border: {
-          top: {
-            color: "999999",
-            space: 1,
-            style: BorderStyle.SINGLE,
-            size: 1,
-          },
+          top: { color: "BBBBBB", space: 1, style: BorderStyle.SINGLE, size: 1 },
         },
+        spacing: { before: 100, after: 60 },
         children: [
-          new TextRun({
-            text: "SOURCE VERIFICATION",
-            bold: true,
-            size: 18,
-            font: "Calibri",
-            color: "666666",
-          }),
+          new TextRun({ text: "SOURCE VERIFICATION", bold: true, size: SMALL, font: FONT, color: "888888" }),
         ],
       })
     );
-
     children.push(
       new Paragraph({
+        spacing: { after: 40 },
         children: [
-          new TextRun({
-            text: `Source: ${authority.sourceTitle} | URL: ${authority.sourceUrl} | Accessed: ${authority.dateAccessed}`,
-            size: 16,
-            font: "Calibri",
-            color: "666666",
-          }),
+          new TextRun({ text: `Source: ${authority.sourceTitle}  |  Accessed: ${authority.dateAccessed}`, size: SMALL, font: FONT, color: "888888" }),
         ],
       })
     );
-
     if (!authority.verified) {
       children.push(
         new Paragraph({
+          spacing: { after: 40 },
           children: [
-            new TextRun({
-              text: "NOTE: Authority details could not be fully verified. Please verify before submission.",
-              size: 16,
-              font: "Calibri",
-              color: "CC6600",
-              italics: true,
-            }),
+            new TextRun({ text: "Authority details could not be fully verified. Please verify before submission.", size: SMALL, font: FONT, color: "CC6600", italics: true }),
           ],
         })
       );
     }
   }
 
-  // Create the document
   const doc = new Document({
     sections: [
       {
@@ -538,7 +308,6 @@ export async function generateWord(draft: RTIDraft, authority: AuthorityInfo | n
     ],
   });
 
-  // Generate and download
   const blob = await Packer.toBlob(doc);
   const { saveAs } = await import("file-saver");
   const filename = `RTI_Application_${draft.title.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 40)}.docx`;
@@ -557,123 +326,134 @@ export async function generatePDF(draft: RTIDraft, authority: AuthorityInfo | nu
   });
 
   const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 25;
-  const contentWidth = pageWidth - 2 * margin;
-  let y = margin;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginLeft = 25;
+  const marginRight = 25;
+  const marginTop = 25;
+  const marginBottom = 25;
+  const contentWidth = pageWidth - marginLeft - marginRight;
+  let y = marginTop;
 
-  const addLine = (text: string, options: { bold?: boolean; size?: number; align?: "left" | "center" | "right"; spacing?: number; color?: [number, number, number] } = {}) => {
-    const { bold = false, size = 11, align = "left", spacing = 5, color = [30, 30, 30] } = options;
-
-    if (y > doc.internal.pageSize.getHeight() - margin) {
+  const checkPageBreak = (needed: number) => {
+    if (y + needed > pageHeight - marginBottom) {
       doc.addPage();
-      y = margin;
+      y = marginTop;
     }
+  };
 
-    doc.setFont("helvetica", bold ? "bold" : "normal");
+  const addText = (
+    text: string,
+    opts: {
+      bold?: boolean;
+      size?: number;
+      align?: "left" | "center" | "right";
+      spacingAfter?: number;
+      color?: [number, number, number];
+      indent?: number;
+    } = {}
+  ) => {
+    const { bold = false, size = 12, align = "left", spacingAfter = 4, color = [30, 30, 30], indent = 0 } = opts;
+
+    doc.setFont("times", bold ? "bold" : "normal");
     doc.setFontSize(size);
     doc.setTextColor(...color);
 
-    const lines = doc.splitTextToSize(text, contentWidth);
-    for (const line of lines) {
-      if (y > doc.internal.pageSize.getHeight() - margin) {
-        doc.addPage();
-        y = margin;
-      }
-      if (align === "center") {
-        doc.text(line, pageWidth / 2, y, { align: "center" });
-      } else if (align === "right") {
-        doc.text(line, pageWidth - margin, y, { align: "right" });
-      } else {
-        doc.text(line, margin, y);
-      }
-      y += size * 0.4;
+    const wrappedLines = doc.splitTextToSize(text, contentWidth - indent);
+    const lineHeight = size * 0.5;
+
+    for (const line of wrappedLines) {
+      checkPageBreak(lineHeight + 2);
+      const x = align === "center" ? pageWidth / 2 : align === "right" ? pageWidth - marginRight : marginLeft + indent;
+      doc.text(line, x, y, { align, maxWidth: contentWidth - indent });
+      y += lineHeight;
     }
-    y += spacing;
+    y += spacingAfter;
   };
 
   const addSeparator = () => {
+    checkPageBreak(6);
     doc.setDrawColor(180, 180, 180);
     doc.setLineWidth(0.2);
-    doc.line(margin, y, pageWidth - margin, y);
+    doc.line(marginLeft, y, pageWidth - marginRight, y);
     y += 5;
   };
 
   // Title
-  addLine(draft.title.toUpperCase(), { bold: true, size: 16, align: "center", spacing: 8 });
+  addText(draft.title.toUpperCase(), { bold: true, size: 16, align: "center", spacingAfter: 6 });
 
-  // Date
-  addLine(`Date: ${draft.date}`, { align: "right", size: 11, spacing: 8 });
+  // Date - right aligned
+  addText(`Date: ${draft.date}`, { align: "right", size: 12, spacingAfter: 6 });
 
   addSeparator();
 
   // Authority
   if (authority) {
-    addLine("TO,", { spacing: 3 });
-    addLine(authority.addressedTo || "The Public Information Officer", { spacing: 2 });
-    addLine(authority.publicAuthority, { bold: true, spacing: 2 });
-    if (authority.department) addLine(`Department: ${authority.department}`, { spacing: 2 });
-    if (authority.officialAddress) addLine(authority.officialAddress, { spacing: 5 });
+    addText("TO,", { spacingAfter: 2 });
+    addText(authority.addressedTo || "The Public Information Officer", { spacingAfter: 2 });
+    addText(authority.publicAuthority, { bold: true, spacingAfter: 2 });
+    if (authority.department) addText(`Department: ${authority.department}`, { spacingAfter: 2 });
+    if (authority.officialAddress) addText(authority.officialAddress, { spacingAfter: 4 });
     addSeparator();
   }
 
   // Subject
-  addLine(`SUBJECT: ${draft.subject}`, { bold: true, size: 11, spacing: 8 });
+  addText(`SUBJECT: ${draft.subject}`, { bold: true, size: 12, spacingAfter: 6 });
 
   addSeparator();
 
   // Salutation
-  addLine("Respected Sir/Madam,", { spacing: 5 });
+  addText("Respected Sir/Madam,", { spacingAfter: 6 });
 
-  // Introduction
-  addLine(draft.introduction, { spacing: 8 });
+  // Introduction - handle multi-paragraph
+  const introParagraphs = draft.introduction.split(/\n+/);
+  for (const para of introParagraphs) {
+    if (para.trim()) addText(para.trim(), { spacingAfter: 4 });
+  }
+
+  y += 2;
 
   // Requests heading
-  addLine("I request the following information under the Right to Information Act, 2005:", { bold: true, spacing: 5 });
+  addText("I request the following information under the Right to Information Act, 2005:", { bold: true, spacingAfter: 4 });
 
   // Numbered requests
   draft.informationRequests.forEach((req, i) => {
-    addLine(`${i + 1}. ${req.text}`, { size: 10, spacing: 5 });
+    addText(`${i + 1}. ${req.text}`, { size: 12, spacingAfter: 4, indent: 4 });
   });
 
+  y += 2;
   addSeparator();
 
   // Preferred format
-  addLine(`PREFERRED FORMAT: ${draft.preferredFormat}`, { spacing: 8 });
+  addText(`PREFERRED FORMAT: ${draft.preferredFormat}`, { spacingAfter: 4 });
 
   addSeparator();
 
   // Applicant details
-  addLine("APPLICANT DETAILS:", { bold: true, spacing: 4 });
-  addLine(`Name: ${draft.applicantName}`, { spacing: 3 });
-  addLine(`Address: ${draft.applicantAddress}`, { spacing: 3 });
-  addLine(`Email: ${draft.applicantEmail}`, { spacing: 3 });
-  addLine(`Phone: ${draft.applicantPhone}`, { spacing: 5 });
+  addText("APPLICANT DETAILS:", { bold: true, spacingAfter: 3 });
+  addText(`Name: ${draft.applicantName}`, { spacingAfter: 2 });
+  addText(`Address: ${draft.applicantAddress}`, { spacingAfter: 2 });
+  addText(`Email: ${draft.applicantEmail}`, { spacingAfter: 2 });
+  addText(`Phone: ${draft.applicantPhone}`, { spacingAfter: 4 });
 
   addSeparator();
 
   // Closing
-  addLine(draft.closingStatement, { spacing: 8 });
+  addText(draft.closingStatement, { spacingAfter: 8 });
 
   // Signature
-  addLine("Yours faithfully,", { spacing: 15 });
-  addLine("________________________", { spacing: 5 });
-  addLine(`(${draft.applicantName})`, { spacing: 3 });
-  addLine(`Date: ${draft.date}`, { spacing: 10 });
+  y += 8;
+  addText("Yours faithfully,", { spacingAfter: 12 });
+  addText("________________________", { spacingAfter: 3 });
+  addText(`(${draft.applicantName})`, { spacingAfter: 3 });
+  addText(`Date: ${draft.date}`, { spacingAfter: 6 });
 
   // Source verification
   if (authority) {
     addSeparator();
-    addLine("SOURCE VERIFICATION", { bold: true, size: 9, color: [120, 120, 120], spacing: 3 });
-    addLine(
-      `Source: ${authority.sourceTitle} | URL: ${authority.sourceUrl} | Accessed: ${authority.dateAccessed}`,
-      { size: 8, color: [120, 120, 120], spacing: 2 }
-    );
+    addText("SOURCE VERIFICATION", { bold: true, size: 9, color: [120, 120, 120], spacingAfter: 2 });
+    addText(`Source: ${authority.sourceTitle}  |  Accessed: ${authority.dateAccessed}`, { size: 9, color: [120, 120, 120], spacingAfter: 2 });
     if (!authority.verified) {
-      addLine("NOTE: Authority details could not be fully verified. Please verify before submission.", {
-        size: 8,
-        color: [200, 100, 0],
-        spacing: 2,
-      });
+      addText("Authority details could not be fully verified. Please verify before submission.", { size: 9, color: [200, 100, 0], spacingAfter: 2 });
     }
   }
 
@@ -681,13 +461,12 @@ export async function generatePDF(draft: RTIDraft, authority: AuthorityInfo | nu
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
+    doc.setFont("times", "normal");
+    doc.setFontSize(9);
     doc.setTextColor(150, 150, 150);
-    doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
+    doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 12, { align: "center" });
   }
 
-  // Save
   const filename = `RTI_Application_${draft.title.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 40)}.pdf`;
   doc.save(filename);
 }
