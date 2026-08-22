@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.svg";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X, User } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -37,6 +37,9 @@ export function Navbar() {
             </Link>
           ))}
           <div className="ml-2">
+            <Button variant="ghost" size="sm" className="gap-1.5" asChild>
+              <Link to="/profile"><User className="h-4 w-4" /></Link>
+            </Button>
             <Button size="sm" className="gap-1.5 font-semibold" asChild>
               <Link to="/new-rti">
                 New RTI <ArrowRight className="h-3.5 w-3.5" />
@@ -69,6 +72,7 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <Link to="/profile" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">Profile</Link>
             <Button size="sm" className="mt-2 gap-1.5 font-semibold" asChild>
               <Link to="/new-rti" onClick={() => setMobileOpen(false)}>
                 New RTI <ArrowRight className="h-3.5 w-3.5" />
