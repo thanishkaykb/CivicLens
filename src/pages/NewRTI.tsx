@@ -6,8 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import { AnimatePresence } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -354,45 +352,63 @@ export default function NewRTI() {
                   <Textarea value={currentAnswer} onChange={(e) => setCurrentAnswer(e.target.value)} placeholder="Type your answer here — include as much detail as you'd like..." className="min-h-[120px] resize-y text-sm leading-relaxed" />
                 )}
                 {currentQuestion.answerType === "select" && currentQuestion.options && (
-                  <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
-                    {currentQuestion.options.map((opt) => (
-                      <div key={opt} className="flex items-center space-x-2 rounded-xl border border-border/60 px-4 py-3 hover:bg-muted/30 transition-all cursor-pointer">
-                        <RadioGroupItem value={opt} id={opt} />
-                        <Label htmlFor={opt} className="cursor-pointer text-sm font-normal flex-1">{opt}</Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <div className="space-y-2">
+                    {currentQuestion.options.map((opt, i) => {
+                      const selected = currentAnswer === opt;
+                      const safeId = `sel-${currentQuestion.id}-${i}`;
+                      return (
+                        <button key={opt} type="button"
+                          onClick={() => setCurrentAnswer(opt)}
+                          className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
+                            selected ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20" : "border-border/60 hover:bg-muted/30 hover:border-border"
+                          }`}
+                        >
+                          <div className={`flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 transition-colors ${
+                            selected ? "border-primary bg-primary" : "border-muted-foreground/30"
+                          }`}> {selected && <div className="h-2 w-2 rounded-full bg-primary-foreground" />} </div>
+                          <span className="text-sm font-medium">{opt}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
                 {currentQuestion.answerType === "multi_select" && currentQuestion.options && (
                   <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Select all that apply</p>
-                    {currentQuestion.options.map((opt) => {
+                    <p className="text-xs font-medium text-muted-foreground">Select all that apply</p>
+                    {currentQuestion.options.map((opt, i) => {
                       const checked = multiSelections.includes(opt);
                       return (
-                        <div key={opt}
-                          className={`flex items-center space-x-3 rounded-xl border px-4 py-3 transition-all cursor-pointer ${
-                            checked ? "border-primary/40 bg-primary/5" : "border-border/60 hover:bg-muted/30"
-                          }`}
+                        <button key={opt} type="button"
                           onClick={() => setMultiSelections((prev) => checked ? prev.filter((s) => s !== opt) : [...prev, opt])}
+                          className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
+                            checked ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20" : "border-border/60 hover:bg-muted/30 hover:border-border"
+                          }`}
                         >
-                          <Checkbox checked={checked} onCheckedChange={() => setMultiSelections((prev) => checked ? prev.filter((s) => s !== opt) : [...prev, opt])} />
-                          <Label className="cursor-pointer text-sm font-normal flex-1">{opt}</Label>
-                        </div>
+                          <div className={`flex h-4.5 w-4.5 items-center justify-center rounded-md border-2 transition-colors ${
+                            checked ? "border-primary bg-primary" : "border-muted-foreground/30"
+                          }`}> {checked && <svg className="h-3 w-3 text-primary-foreground" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>} </div>
+                          <span className="text-sm font-medium">{opt}</span>
+                        </button>
                       );
                     })}
                   </div>
                 )}
                 {currentQuestion.answerType === "yes_no" && (
-                  <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
-                    <div className="flex gap-3">
-                      {["Yes", "No", "I don't know"].map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2 rounded-lg border border-border/60 px-4 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer flex-1">
-                          <RadioGroupItem value={opt} id={opt} />
-                          <Label htmlFor={opt} className="cursor-pointer text-sm font-normal">{opt}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </RadioGroup>
+                  <div className="flex gap-3">
+                    {["Yes", "No", "I don't know"].map((opt) => {
+                      const selected = currentAnswer === opt;
+                      return (
+                        <button key={opt} type="button"
+                          onClick={() => setCurrentAnswer(opt)}
+                          className={`flex-1 rounded-xl border px-4 py-3 text-center transition-all ${
+                            selected ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20" : "border-border/60 hover:bg-muted/30 hover:border-border"
+                          }`}
+                        >
+                          <span className="text-sm font-medium">{opt}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
 
                 {currentQuestion.allowsUnknown && currentQuestion.answerType === "text" && (
