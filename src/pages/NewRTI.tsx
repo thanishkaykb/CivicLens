@@ -70,6 +70,7 @@ export default function NewRTI() {
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [applicationId, setApplicationId] = useState<Id<"rtiApplications"> | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [returnTo, setReturnTo] = useState<FlowStep | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
   const saveDraftMutation = useMutation(api.rtiApplications.saveDraft);
@@ -85,7 +86,13 @@ export default function NewRTI() {
       if (existingDraft.problemAnalysis) setAnalysis(existingDraft.problemAnalysis);
       if (existingDraft.answers) setAnswers(existingDraft.answers);
       if (existingDraft.authority) setAuthority(existingDraft.authority);
-      if (existingDraft.draft) { setDraft(existingDraft.draft); setEditingDraft({ ...existingDraft.draft }); setStep("review"); }
+      if (existingDraft.draft) {
+        setDraft(existingDraft.draft);
+        setEditingDraft({ ...existingDraft.draft });
+        setApplicantName(existingDraft.draft.applicantName || "");
+        setApplicantAddress(existingDraft.draft.applicantAddress || "");
+        setStep("review");
+      }
       else if (existingDraft.authority) setStep("authority");
       else if (existingDraft.answers?.length > 0) setStep("evidence");
       else if (existingDraft.problemAnalysis) setStep("confirm_analysis");
@@ -118,11 +125,16 @@ export default function NewRTI() {
     try {
       const result = await analyzeProblem(description);
       setAnalysis(result);
-      setStep("confirm_analysis");
+      if (returnTo === "review") {
+        // When editing from review, skip questions and go straight to authority/regen
+        setStep("confirm_analysis");
+      } else {
+        setStep("confirm_analysis");
+      }
     } catch {
       setAnalysisError("We couldn't analyze your description. You can try again or continue manually.");
     } finally { setIsAnalyzing(false); }
-  }, [description]);
+  }, [description, returnTo]);
 
   const handleStartQuestions = useCallback(async () => {
     setStep("questions");
@@ -177,6 +189,7 @@ export default function NewRTI() {
       const rti = await generateRTI(analysis!, answers, authority, applicantName, applicantAddress);
       setDraft(rti);
       setEditingDraft({ ...rti });
+      setReturnTo(null);
       setStep("review");
     } catch { toast.error("Could not generate RTI draft. Please try again."); }
     finally { setIsGenerating(false); }
@@ -339,6 +352,11 @@ export default function NewRTI() {
                   <Button variant="outline" onClick={() => { setAnalysis({ primaryCategory: "other", secondaryCategories: [], location: null, timePeriod: null, statedProblem: description, desiredInformation: ["Information about the problem"], missingInformation: [], recommendedQuestionCategories: [] }); setStep("confirm_analysis"); }}>
                     I don't know where to start
                   </Button>
+                  {returnTo === "review" && (
+                    <Button variant="ghost" onClick={() => { setReturnTo(null); setStep("review"); }} className="ml-auto text-muted-foreground">
+                      <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Return to Review
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -472,7 +490,12 @@ export default function NewRTI() {
                     {!isUnknown && !currentAnswer && (currentQuestion.answerType === "multi_select" ? multiSelections.length === 0 : true) ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <Button variant="ghost" onClick={() => { setStep("evidence"); }}>Skip all questions</Button>
-                  <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft} className="ml-auto text-muted-foreground"><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
+                  <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft}><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
+                  {returnTo === "review" && (
+                    <Button variant="ghost" onClick={() => { setReturnTo(null); setStep("review"); }} className="ml-auto text-muted-foreground">
+                      <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Return to Review
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -518,7 +541,12 @@ export default function NewRTI() {
                     {isGenerating ? <><Loader2 className="h-4 w-4 animate-spin" /> Identifying authority...</> : <>Identify Authority <ArrowRight className="h-4 w-4" /></>}
                   </Button>
                   <Button variant="ghost" onClick={handleFindAuthority}>Continue without evidence</Button>
-                  <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft} className="ml-auto text-muted-foreground"><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
+                  <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft}><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
+                  {returnTo === "review" && (
+                    <Button variant="ghost" onClick={() => { setReturnTo(null); setStep("review"); }} className="ml-auto text-muted-foreground">
+                      <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Return to Review
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -590,7 +618,12 @@ export default function NewRTI() {
                       {isGenerating ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <>Generate RTI Application <ArrowRight className="h-4 w-4" /></>}
                     </Button>
                     <Button variant="outline" onClick={() => setStep("questions")}>Go Back</Button>
-                    <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft} className="ml-auto text-muted-foreground"><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
+                    <Button variant="ghost" onClick={handleSaveDraft} disabled={isSavingDraft}><Save className="mr-1.5 h-3.5 w-3.5" />Save Draft</Button>
+                    {returnTo === "review" && (
+                      <Button variant="ghost" onClick={() => { setReturnTo(null); setStep("review"); }} className="text-muted-foreground">
+                        <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Return to Review
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -623,8 +656,35 @@ export default function NewRTI() {
           <motion.div key="review" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold tracking-tight">Review your RTI</h1>
-              <Button onClick={() => setStep("export")} className="gap-2">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
+              <Button onClick={() => setStep("export")} className="gap-2 font-semibold">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
             </div>
+
+            {/* Edit Details — jump back to any step */}
+            <Card className="border-border/70">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Edit Details</CardTitle>
+                <p className="text-xs text-muted-foreground">Need to change something? Jump back to any step. Your RTI will update automatically when you return.</p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    { label: "Problem Description", step: "input" as FlowStep, icon: <Edit3 className="h-4 w-4" />, desc: description.substring(0, 60) + (description.length > 60 ? "..." : "") },
+                    { label: "Answers", step: "questions" as FlowStep, icon: <Edit3 className="h-4 w-4" />, desc: `${answers.length} answers provided` },
+                    { label: "Evidence", step: "evidence" as FlowStep, icon: <Upload className="h-4 w-4" />, desc: `${evidence.length} file(s) attached` },
+                    { label: "Authority", step: "authority" as FlowStep, icon: <Landmark className="h-4 w-4" />, desc: authority?.publicAuthority || "Not identified" },
+                  ].map((item) => (
+                    <button key={item.step} type="button" onClick={() => { setReturnTo("review"); setStep(item.step); }}
+                      className="flex flex-col items-start gap-2 rounded-xl border border-border/60 p-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5"
+                    >
+                      <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                        {item.icon} {item.label}
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{item.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Subject */}
             <Card className="border-border/70">
@@ -716,6 +776,55 @@ export default function NewRTI() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Public Authority — editable inline */}
+            <Card className="border-border/70">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Public Authority</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={() => toggleEditMode("authority")}><Edit3 className="h-3.5 w-3.5" /></Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {editMode.authority ? (
+                  <div className="space-y-3">
+                    {([
+                      ["publicAuthority", "Public Authority"],
+                      ["department", "Department"],
+                      ["addressedTo", "Addressed To"],
+                      ["officialAddress", "Official Address"],
+                      ["submissionMethod", "Submission Method"],
+                      ["officialWebsite", "Official Website"],
+                    ] as const).map(([key, label]) => (
+                      <div key={key}><Label className="text-xs font-semibold">{label}</Label><Input value={(authority as any)?.[key] || ""} onChange={(e) => setAuthority((prev) => prev ? { ...prev, [key]: e.target.value } : prev)} className="mt-1" /></div>
+                    ))}
+                    <Button size="sm" onClick={() => setEditMode((p) => ({ ...p, authority: false }))}>Save</Button>
+                  </div>
+                ) : authority ? (
+                  <div className="grid gap-2 text-sm sm:grid-cols-2">
+                    <div><span className="text-muted-foreground">Authority:</span> {authority.publicAuthority}</div>
+                    <div><span className="text-muted-foreground">Department:</span> {authority.department}</div>
+                    <div><span className="text-muted-foreground">Addressed To:</span> {authority.addressedTo}</div>
+                    <div><span className="text-muted-foreground">Submission:</span> {authority.submissionMethod}</div>
+                  </div>
+                ) : <p className="text-sm text-muted-foreground">No authority identified.</p>}
+              </CardContent>
+            </Card>
+
+            {/* Re-generate after edits */}
+            {description && (
+              <Card className="border-dashed border-primary/30 bg-primary/5">
+                <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Made changes to your details?</p>
+                    <p className="text-xs text-muted-foreground">Re-generate the RTI to reflect your latest edits.</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleGenerateDraft} disabled={isGenerating} className="gap-2">
+                    {isGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Regenerating...</> : <><RotateCcw className="h-3.5 w-3.5" /> Re-generate RTI</>}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="flex gap-3 pt-2 pb-8">
               <Button onClick={() => setStep("export")} className="gap-2 font-semibold">Continue to Export <ArrowRight className="h-4 w-4" /></Button>
