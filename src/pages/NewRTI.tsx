@@ -32,11 +32,10 @@ type FlowStep = "input" | "analysis" | "confirm_analysis" | "questions" | "evide
 
 const STEPS: { key: FlowStep; label: string }[] = [
   { key: "input", label: "Your Problem" },
-  { key: "analysis", label: "Analysis" },
+  { key: "confirm_analysis", label: "Analysis" },
   { key: "questions", label: "Questions" },
   { key: "evidence", label: "Evidence" },
   { key: "authority", label: "Authority" },
-  { key: "draft", label: "RTI Draft" },
   { key: "review", label: "Review" },
   { key: "export", label: "Export" },
 ];
@@ -450,13 +449,19 @@ export default function NewRTI() {
     return true;
   };
 
-  const goToStep = (key: FlowStep) => {
+  const goToStep = useCallback((key: FlowStep) => {
     if (isStepAccessible(key)) {
       setReturnTo(null);
       setStep(key);
       window.scrollTo({ top: 0, behavior: "smooth" });
+      // When navigating to questions, regenerate the next unanswered question
+      if (key === "questions" && analysis && !currentQuestion) {
+        generateQuestions(analysis, answers).then((q) => {
+          if (q) setCurrentQuestion(q);
+        }).catch(() => {});
+      }
     }
-  };
+  }, [isStepAccessible, analysis, answers, currentQuestion]);
 
   const prevStep = () => {
     if (currentIdx > 0) goToStep(STEPS[currentIdx - 1].key);
@@ -830,12 +835,22 @@ export default function NewRTI() {
         )}
 
         {/* STEP: Draft (generating) */}
-        {step === "draft" && !editingDraft && (
+        {step === "draft" && (
           <motion.div key="draft" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Card className="border-border/70">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="mt-4 text-sm text-muted-foreground">Generating your RTI application...</p>
+              {isGenerating ? (
+                <><Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="mt-4 text-sm text-muted-foreground">Generating your RTI application...</p></>
+              ) : editingDraft ? (
+                <><CheckCircle2 className="h-8 w-8 text-green-600" />
+                <p className="mt-4 text-sm text-muted-foreground">Draft generated. Redirecting to review...</p>
+                <Button variant="outline" className="mt-4" onClick={() => setStep("review")}>Go to Review</Button></>
+              ) : (
+                <><AlertCircle className="h-8 w-8 text-muted-foreground" />
+                <p className="mt-4 text-sm text-muted-foreground">Something went wrong.</p>
+                <Button variant="outline" className="mt-4" onClick={() => setStep("authority")}>Go Back</Button></>
+              )}
             </CardContent>
           </Card>
           </motion.div>
